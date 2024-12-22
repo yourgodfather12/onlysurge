@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-gradient: linear-gradient(135deg, #FF1B6B 0%, #B026FF 50%, #45CAFF 100%);
+  --accent-yellow: #FFD700;
+  --neon-glow: 0 0 10px rgba(255, 27, 107, 0.5), 0 0 20px rgba(255, 27, 107, 0.3);
+}
+
+@layer base {
+  body {
+    @apply antialiased bg-dark text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-orbitron font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue
+           px-6 py-3 rounded-lg font-semibold
+           transform transition-all duration-300
+           hover:scale-105 hover:shadow-neon-pink
+           relative overflow-hidden
+           before:absolute before:inset-0
+           before:bg-gradient-to-r before:from-neon-blue before:via-neon-purple before:to-neon-pink
+           before:opacity-0 before:transition-opacity before:duration-300
+           hover:before:opacity-100;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-neon-purple text-white
+           px-6 py-3 rounded-lg font-semibold
+           transform transition-all duration-300
+           hover:scale-105 hover:shadow-neon-purple hover:border-transparent
+           hover:bg-neon-purple/10
+           relative overflow-hidden;
+  }
+
+  .nav-link {
+    @apply relative text-gray-300 hover:text-white
+           transition-colors duration-300
+           after:content-[''] after:absolute after:bottom-0 after:left-0
+           after:w-0 after:h-0.5 after:bg-gradient-to-r
+           after:from-neon-pink after:to-neon-blue
+           after:transition-all after:duration-300
+           hover:after:w-full
+           hover:shadow-neon-blue;
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10
+           shadow-lg hover:shadow-neon-pink
+           transition-all duration-300;
+  }
+
+  .card {
+    @apply bg-dark-light rounded-xl p-6
+           border border-dark-lighter
+           transform transition-all duration-300
+           hover:scale-105 hover:shadow-neon-purple
+           hover:border-neon-purple/50;
+  }
+
+  .input {
+    @apply bg-dark-light border border-dark-lighter rounded-lg
+           px-4 py-2 text-white
+           focus:outline-none focus:border-neon-blue
+           focus:shadow-neon-blue
+           transition-all duration-300;
+  }
+}
+
+/* Floating Particles */
+.particle {
+  @apply absolute w-1 h-1 rounded-full
+         opacity-50 pointer-events-none
+         animate-particle-float;
+}
+
+.particle-pink {
+  @apply bg-neon-pink shadow-neon-pink;
+}
+
+.particle-blue {
+  @apply bg-neon-blue shadow-neon-blue;
+}
+
+.particle-purple {
+  @apply bg-neon-purple shadow-neon-purple;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r
+         from-neon-pink via-neon-purple to-neon-blue
+         hover:from-neon-blue hover:via-neon-purple hover:to-neon-pink
+         transition-all duration-500;
+}
+
+/* Neon Border */
+.neon-border {
+  @apply border border-neon-pink/50
+         shadow-neon-pink
+         hover:border-neon-pink
+         hover:shadow-neon-pink
+         transition-all duration-300;
+}
+
+/* Animated Grid Background */
+.grid-background {
+  @apply absolute inset-0 bg-[url('/grid.svg')] opacity-20
+         animate-pulse-glow;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-light;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-neon-pink to-neon-blue
+         rounded-full;
+}
