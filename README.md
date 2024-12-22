@@ -23,7 +23,7 @@ OnlySurge is a modern dashboard application built with Next.js, designed to help
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/onlysurge.git
+git clone https://github.com/yourgodfather12/OnlySurge.git
 ```
 
 2. Install dependencies:
