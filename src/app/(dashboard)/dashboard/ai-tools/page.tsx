@@ -1,150 +1,140 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  SparklesIcon,
-  PencilSquareIcon,
-  PhotoIcon,
-  VideoCameraIcon,
-  ChatBubbleLeftRightIcon,
-  RocketLaunchIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Wand2,
+  MessageSquare,
+  Image as ImageIcon,
+  FileText,
+  Sparkles,
+  BrainCircuit,
+  ArrowRight,
+  Zap,
+  Camera,
+  Hash,
+  Calendar,
+  Palette,
+} from 'lucide-react'
 
-const aiTools = [
+const tools = [
   {
-    id: 1,
-    name: 'Content Generator',
-    description: 'Generate engaging captions, stories, and posts with AI',
-    icon: PencilSquareIcon,
-    category: 'writing'
+    title: 'AI Content Writer',
+    description: 'Generate engaging captions and posts with AI',
+    icon: MessageSquare,
+    category: 'content',
+    status: 'popular',
   },
   {
-    id: 2,
-    name: 'Image Enhancer',
-    description: 'Enhance and optimize your images with AI technology',
-    icon: PhotoIcon,
-    category: 'visual'
+    title: 'Image Enhancement',
+    description: 'Enhance and optimize your images automatically',
+    icon: ImageIcon,
+    category: 'media',
+    status: 'new',
   },
   {
-    id: 3,
-    name: 'Video Editor',
-    description: 'Edit and enhance your videos with AI-powered tools',
-    icon: VideoCameraIcon,
-    category: 'visual'
+    title: 'Caption Generator',
+    description: 'Create compelling captions for your content',
+    icon: FileText,
+    category: 'content',
+    status: 'popular',
   },
   {
-    id: 4,
-    name: 'Chat Assistant',
-    description: 'Engage with your audience using AI chat automation',
-    icon: ChatBubbleLeftRightIcon,
-    category: 'engagement'
+    title: 'Smart Scheduler',
+    description: 'AI-powered posting time recommendations',
+    icon: Calendar,
+    category: 'automation',
+    status: 'new',
   },
   {
-    id: 5,
-    name: 'Performance Optimizer',
-    description: 'Optimize your content strategy with AI insights',
-    icon: RocketLaunchIcon,
-    category: 'analytics'
+    title: 'Hashtag Generator',
+    description: 'Generate relevant hashtags for maximum reach',
+    icon: Hash,
+    category: 'content',
+    status: 'popular',
   },
   {
-    id: 6,
-    name: 'Auto-Scheduler',
-    description: 'Schedule your content with AI-powered timing optimization',
-    icon: ArrowPathIcon,
-    category: 'automation'
+    title: 'Style Assistant',
+    description: 'Get AI suggestions for visual consistency',
+    icon: Palette,
+    category: 'media',
+    status: 'new',
   },
 ]
 
-const categories = [
-  { name: 'All', value: 'all' },
-  { name: 'Writing', value: 'writing' },
-  { name: 'Visual', value: 'visual' },
-  { name: 'Engagement', value: 'engagement' },
-  { name: 'Analytics', value: 'analytics' },
-  { name: 'Automation', value: 'automation' },
+const quickActions = [
+  {
+    title: 'Generate Content Ideas',
+    description: 'Get AI-powered content suggestions',
+    icon: Sparkles,
+    color: 'text-yellow-500',
+  },
+  {
+    title: 'Smart Analytics',
+    description: 'AI insights from your content performance',
+    icon: BrainCircuit,
+    color: 'text-blue-500',
+  },
+  {
+    title: 'Batch Processing',
+    description: 'Process multiple items with AI',
+    icon: Zap,
+    color: 'text-purple-500',
+  },
 ]
 
 export default function AIToolsPage() {
-  const [selectedCategory, setSelectedCategory] = useState('all')
-
-  const filteredTools = aiTools.filter(tool => 
-    selectedCategory === 'all' || tool.category === selectedCategory
-  )
-
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
+    <div className="flex flex-col gap-8 p-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">AI Tools</h1>
+        <h1 className="text-3xl font-bold">AI Tools</h1>
         <p className="text-gray-400">Enhance your content with AI-powered tools</p>
       </div>
 
-      {/* Categories */}
-      <div className="flex flex-wrap gap-4">
-        {categories.map((category) => (
-          <button
-            key={category.value}
-            onClick={() => setSelectedCategory(category.value)}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${selectedCategory === category.value 
-                ? 'bg-primary text-white' 
-                : 'bg-gray-900 text-gray-400 hover:text-white'
-              }
-            `}
-          >
-            {category.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Tools Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTools.map((tool) => (
-          <motion.div
-            key={tool.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-900 rounded-xl p-6 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-gray-800 rounded-lg group-hover:bg-primary/10 transition-colors">
-                <tool.icon className="w-6 h-6 text-primary" />
+      <div className="grid gap-6 md:grid-cols-3">
+        {quickActions.map((action) => (
+          <Card key={action.title} className="dashboard-card p-6 hover:cursor-pointer">
+            <div className="flex items-start justify-between">
+              <div>
+                <action.icon className={`h-8 w-8 ${action.color} mb-4`} />
+                <h3 className="font-medium">{action.title}</h3>
+                <p className="text-sm text-gray-400 mt-1">{action.description}</p>
               </div>
-              <h3 className="text-lg font-semibold text-white">{tool.name}</h3>
+              <ArrowRight className="h-5 w-5 text-gray-400" />
             </div>
-            <p className="text-gray-400">{tool.description}</p>
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <button className="text-primary hover:text-primary/80 text-sm font-medium">
-                Launch Tool →
-              </button>
-            </div>
-          </motion.div>
+          </Card>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <SparklesIcon className="w-6 h-6 text-primary" />
-          <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 bg-gray-800 rounded-lg hover:bg-gray-800/80 transition-colors text-left">
-            <h4 className="font-medium text-white mb-1">Generate New Post</h4>
-            <p className="text-sm text-gray-400">Create AI-generated content quickly</p>
-          </button>
-          <button className="p-4 bg-gray-800 rounded-lg hover:bg-gray-800/80 transition-colors text-left">
-            <h4 className="font-medium text-white mb-1">Enhance Latest Image</h4>
-            <p className="text-sm text-gray-400">Optimize your recent upload</p>
-          </button>
-          <button className="p-4 bg-gray-800 rounded-lg hover:bg-gray-800/80 transition-colors text-left">
-            <h4 className="font-medium text-white mb-1">Analyze Performance</h4>
-            <p className="text-sm text-gray-400">Get AI insights on your content</p>
-          </button>
-        </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {tools.map((tool) => (
+          <Card key={tool.title} className="dashboard-card overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <tool.icon className="h-8 w-8 text-pink-500" />
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    tool.status === 'new'
+                      ? 'bg-blue-500/10 text-blue-500'
+                      : 'bg-yellow-500/10 text-yellow-500'
+                  }`}
+                >
+                  {tool.status}
+                </span>
+              </div>
+              <div className="mt-4">
+                <h3 className="font-medium">{tool.title}</h3>
+                <p className="text-sm text-gray-400 mt-1">{tool.description}</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-800">
+                <Button className="w-full gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  Try Now
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   )

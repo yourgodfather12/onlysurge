@@ -1,218 +1,180 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  UserCircleIcon,
-  BellIcon,
-  CreditCardIcon,
-  ShieldCheckIcon,
-  KeyIcon,
-  GlobeAltIcon,
-  ArrowRightIcon
-} from '@heroicons/react/24/outline'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import {
+  User,
+  Bell,
+  CreditCard,
+  Lock,
+  Mail,
+  Globe,
+  Smartphone,
+  Shield,
+  Clock,
+  ArrowRight,
+  Settings,
+  LogOut,
+  CheckCircle,
+  XCircle,
+  Key,
+} from 'lucide-react'
 
-const settingsSections = [
+const sections = [
   {
-    id: 'profile',
-    name: 'Profile Settings',
+    title: 'Profile Settings',
     description: 'Manage your personal information and preferences',
-    icon: UserCircleIcon,
-    fields: [
-      { name: 'name', label: 'Full Name', type: 'text', value: 'John Doe' },
-      { name: 'email', label: 'Email Address', type: 'email', value: 'john@example.com' },
-      { name: 'bio', label: 'Bio', type: 'textarea', value: 'Content creator and digital artist' },
-    ]
+    icon: User,
+    items: [
+      { name: 'Personal Information', status: 'Complete', icon: CheckCircle },
+      { name: 'Email Settings', status: 'Incomplete', icon: XCircle },
+      { name: 'Connected Accounts', status: '3 Connected', icon: Globe },
+    ],
   },
   {
-    id: 'notifications',
-    name: 'Notifications',
+    title: 'Notifications',
     description: 'Configure how you receive notifications',
-    icon: BellIcon,
-    settings: [
-      { name: 'new_subscriber', label: 'New Subscriber', enabled: true },
-      { name: 'new_message', label: 'New Message', enabled: true },
-      { name: 'content_engagement', label: 'Content Engagement', enabled: true },
-      { name: 'tips_received', label: 'Tips Received', enabled: true },
-    ]
+    icon: Bell,
+    items: [
+      { name: 'Email Notifications', status: 'Enabled', icon: Mail },
+      { name: 'Push Notifications', status: 'Disabled', icon: Smartphone },
+      { name: 'Activity Alerts', status: 'Enabled', icon: Bell },
+    ],
   },
   {
-    id: 'billing',
-    name: 'Billing & Subscription',
+    title: 'Billing & Subscription',
     description: 'Manage your subscription and payment methods',
-    icon: CreditCardIcon,
-    plan: {
-      name: 'Pro Plan',
-      price: '$29.99/month',
-      nextBilling: 'Dec 30, 2023',
-    }
+    icon: CreditCard,
+    items: [
+      { name: 'Current Plan', status: 'Pro Plan', icon: CheckCircle },
+      { name: 'Payment Method', status: 'Visa ****4242', icon: CreditCard },
+      { name: 'Billing History', status: 'View All', icon: Clock },
+    ],
+  },
+  {
+    title: 'Security',
+    description: 'Protect your account and data',
+    icon: Shield,
+    items: [
+      { name: 'Two-Factor Auth', status: 'Enabled', icon: Lock },
+      { name: 'Password', status: 'Last changed 2 months ago', icon: Key },
+      { name: 'Active Sessions', status: '2 Devices', icon: Smartphone },
+    ],
+  },
+]
+
+const recentActivity = [
+  {
+    action: 'Password Changed',
+    timestamp: '2 hours ago',
+    status: 'success',
+    icon: Lock,
+  },
+  {
+    action: 'New Device Login',
+    timestamp: '1 day ago',
+    status: 'warning',
+    icon: Smartphone,
+  },
+  {
+    action: 'Email Updated',
+    timestamp: '3 days ago',
+    status: 'success',
+    icon: Mail,
   },
 ]
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState('profile')
-  const [notifications, setNotifications] = useState({
-    new_subscriber: true,
-    new_message: true,
-    content_engagement: true,
-    tips_received: true,
-  })
-
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
+    <div className="flex flex-col gap-8 p-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-gray-400">Manage your account settings and preferences</p>
       </div>
 
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Navigation Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          {settingsSections.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`
-                w-full p-4 rounded-xl text-left transition-colors
-                ${activeSection === section.id 
-                  ? 'bg-primary text-white' 
-                  : 'bg-gray-900 text-gray-400 hover:text-white'
-                }
-              `}
-            >
-              <div className="flex items-center gap-3">
-                <section.icon className="w-5 h-5" />
-                <span className="font-medium">{section.name}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Settings Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Profile Settings */}
-          {activeSection === 'profile' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gray-900 rounded-xl p-6"
-            >
-              <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
-              <div className="space-y-4">
-                {settingsSections[0].fields.map((field) => (
-                  <div key={field.name}>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">
-                      {field.label}
-                    </label>
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary"
-                        rows={4}
-                        defaultValue={field.value}
-                      />
-                    ) : (
-                      <input
-                        type={field.type}
-                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary"
-                        defaultValue={field.value}
-                      />
-                    )}
-                  </div>
-                ))}
-                <div className="pt-4">
-                  <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                    Save Changes
-                  </button>
+      <div className="grid gap-6">
+        {sections.map((section) => (
+          <Card key={section.title} className="dashboard-card overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2 rounded-lg bg-gray-800">
+                  <section.icon className="h-5 w-5 text-blue-500" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{section.title}</h2>
+                  <p className="text-sm text-gray-400">{section.description}</p>
                 </div>
               </div>
-            </motion.div>
-          )}
-
-          {/* Notification Settings */}
-          {activeSection === 'notifications' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gray-900 rounded-xl p-6"
-            >
-              <h2 className="text-lg font-semibold text-white mb-4">Notification Preferences</h2>
-              <div className="space-y-4">
-                {settingsSections[1].settings.map((setting) => (
-                  <div key={setting.name} className="flex items-center justify-between py-2">
-                    <div className="flex items-center">
-                      <span className="text-white">{setting.label}</span>
+              <div className="mt-6 space-y-4">
+                {section.items.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon
+                        className={`h-5 w-5 ${
+                          item.status === 'Complete' || item.status === 'Enabled'
+                            ? 'text-green-500'
+                            : item.status === 'Incomplete'
+                            ? 'text-red-500'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                      <span className="font-medium">{item.name}</span>
                     </div>
-                    <button
-                      onClick={() => setNotifications(prev => ({
-                        ...prev,
-                        [setting.name]: !prev[setting.name as keyof typeof prev]
-                      }))}
-                      className={`
-                        relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
-                        ${notifications[setting.name as keyof typeof notifications] ? 'bg-primary' : 'bg-gray-700'}
-                      `}
-                    >
-                      <span
-                        className={`
-                          pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-                          ${notifications[setting.name as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'}
-                        `}
-                      />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-400">{item.status}</span>
+                      <ArrowRight className="h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
                 ))}
               </div>
-            </motion.div>
-          )}
+            </div>
+          </Card>
+        ))}
+      </div>
 
-          {/* Billing Settings */}
-          {activeSection === 'billing' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              {/* Current Plan */}
-              <div className="bg-gray-900 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Current Plan</h2>
-                <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <div>
-                    <h3 className="text-white font-medium">{settingsSections[2].plan.name}</h3>
-                    <p className="text-gray-400">{settingsSections[2].plan.price}</p>
-                  </div>
-                  <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                    Upgrade Plan
-                  </button>
+      <Card className="dashboard-card">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+          <div className="space-y-4">
+            {recentActivity.map((activity) => (
+              <div
+                key={activity.action}
+                className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50"
+              >
+                <div className="flex items-center gap-3">
+                  <activity.icon
+                    className={`h-5 w-5 ${
+                      activity.status === 'success'
+                        ? 'text-green-500'
+                        : activity.status === 'warning'
+                        ? 'text-yellow-500'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                  <span className="font-medium">{activity.action}</span>
                 </div>
-                <p className="mt-2 text-sm text-gray-400">
-                  Next billing date: {settingsSections[2].plan.nextBilling}
-                </p>
+                <span className="text-sm text-gray-400">{activity.timestamp}</span>
               </div>
-
-              {/* Payment Methods */}
-              <div className="bg-gray-900 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Payment Methods</h2>
-                <button className="w-full flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-800/80">
-                  <div className="flex items-center gap-3">
-                    <CreditCardIcon className="w-5 h-5 text-gray-400" />
-                    <span className="text-white">Add Payment Method</span>
-                  </div>
-                  <ArrowRightIcon className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
-
-              {/* Billing History */}
-              <div className="bg-gray-900 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Billing History</h2>
-                <div className="text-center py-8 text-gray-400">
-                  <p>No billing history available</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
+            ))}
+          </div>
         </div>
+      </Card>
+
+      <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+        <div className="flex items-center gap-3">
+          <LogOut className="h-5 w-5 text-red-500" />
+          <div>
+            <h3 className="font-medium text-red-500">Delete Account</h3>
+            <p className="text-sm text-gray-400">
+              Permanently delete your account and all associated data
+            </p>
+          </div>
+        </div>
+        <Button variant="destructive">Delete Account</Button>
       </div>
     </div>
   )
