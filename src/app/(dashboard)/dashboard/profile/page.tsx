@@ -1,117 +1,267 @@
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Camera, Mail, MapPin, Phone, User } from "lucide-react"
+'use client'
+
+import React, { useEffect } from 'react'
+import { motion } from 'framer-motion'
+import {
+  User,
+  Mail,
+  Link as LinkIcon,
+  Instagram,
+  Twitter,
+  Globe,
+  Camera,
+  Save,
+  Plus,
+  Settings,
+  ChevronRight
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { useDashboard } from '@/app/(dashboard)/layout'
+import { PlatformBadge } from '@/components/ui/platform-badge'
+import { Platform } from '@/types/dashboard'
+
+interface SocialLink {
+  id: string
+  platform: string
+  url: string
+  icon: React.ElementType
+}
+
+interface Profile {
+  id: string
+  username: string
+  displayName: string
+  email: string
+  bio: string
+  avatarUrl: string
+  platforms: Platform[]
+  socialLinks: SocialLink[]
+}
+
+const profile: Profile = {
+  id: '1',
+  username: 'creator123',
+  displayName: 'Creative Creator',
+  email: 'creator@example.com',
+  bio: 'Digital content creator passionate about sharing unique experiences.',
+  avatarUrl: '/placeholder.jpg',
+  platforms: [
+    {
+      id: 'onlyfans',
+      name: 'OnlyFans',
+      type: 'onlyfans',
+      icon: null,
+      status: 'connected',
+      metrics: {
+        subscribers: 1234,
+        views: 45678,
+        revenue: 9012
+      }
+    },
+    {
+      id: 'fansly',
+      name: 'Fansly',
+      type: 'fansly',
+      icon: null,
+      status: 'connected',
+      metrics: {
+        subscribers: 567,
+        views: 8901,
+        revenue: 2345
+      }
+    }
+  ],
+  socialLinks: [
+    {
+      id: '1',
+      platform: 'Instagram',
+      url: 'https://instagram.com/creator123',
+      icon: Instagram
+    },
+    {
+      id: '2',
+      platform: 'Twitter',
+      url: 'https://twitter.com/creator123',
+      icon: Twitter
+    },
+    {
+      id: '3',
+      platform: 'Website',
+      url: 'https://creator123.com',
+      icon: Globe
+    }
+  ]
+}
 
 export default function ProfilePage() {
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <p className="text-gray-400">Manage your account settings and preferences</p>
-        </div>
-        <Button>Save Changes</Button>
-      </div>
+  const { setPageProps } = useDashboard()
 
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* Profile Info */}
-        <Card className="p-6 space-y-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500" />
-              <Button size="icon" variant="ghost" className="absolute bottom-0 right-0 rounded-full bg-gray-800 hover:bg-gray-700">
-                <Camera className="w-4 h-4" />
+  useEffect(() => {
+    setPageProps({
+      title: "Profile",
+      description: "Manage your profile and settings",
+      showPlatformFilter: false,
+      actions: (
+        <Button
+          size="sm"
+          className="rounded-full"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      )
+    })
+  }, [setPageProps])
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Profile Header */}
+      <Card className="p-6">
+        <div className="flex items-start gap-6">
+          <div className="relative">
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName}
+              className="h-24 w-24 rounded-full object-cover"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute bottom-0 right-0 rounded-full bg-background shadow-lg"
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">{profile.displayName}</h2>
+                <p className="text-zinc-400">@{profile.username}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="rounded-full">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
               </Button>
             </div>
+            <div className="flex items-center gap-2 mt-4">
+              {profile.platforms.map((platform) => (
+                <PlatformBadge
+                  key={platform.id}
+                  platform={platform}
+                  showStatus
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Basic Information */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <h2 className="text-xl font-semibold">John Doe</h2>
-              <p className="text-gray-400">@johndoe</p>
+              <label className="text-sm font-medium mb-1.5 block">
+                Username
+              </label>
+              <Input
+                startDecorator={<User className="h-4 w-4 text-zinc-400" />}
+                defaultValue={profile.username}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Display Name
+              </label>
+              <Input
+                startDecorator={<User className="h-4 w-4 text-zinc-400" />}
+                defaultValue={profile.displayName}
+              />
             </div>
           </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Full Name</label>
-              <div className="flex">
-                <span className="flex items-center px-3 border border-r-0 rounded-l-md border-gray-800 bg-gray-900">
-                  <User className="w-4 h-4 text-gray-400" />
-                </span>
-                <Input className="rounded-l-none" placeholder="John Doe" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Email</label>
-              <div className="flex">
-                <span className="flex items-center px-3 border border-r-0 rounded-l-md border-gray-800 bg-gray-900">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                </span>
-                <Input className="rounded-l-none" placeholder="john@example.com" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Phone</label>
-              <div className="flex">
-                <span className="flex items-center px-3 border border-r-0 rounded-l-md border-gray-800 bg-gray-900">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                </span>
-                <Input className="rounded-l-none" placeholder="+1 (555) 000-0000" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Location</label>
-              <div className="flex">
-                <span className="flex items-center px-3 border border-r-0 rounded-l-md border-gray-800 bg-gray-900">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                </span>
-                <Input className="rounded-l-none" placeholder="San Francisco, CA" />
-              </div>
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">
+              Email
+            </label>
+            <Input
+              startDecorator={<Mail className="h-4 w-4 text-zinc-400" />}
+              defaultValue={profile.email}
+            />
           </div>
-        </Card>
-
-        {/* Account Settings */}
-        <Card className="p-6 space-y-6">
-          <h2 className="text-xl font-semibold">Account Settings</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50">
-              <div>
-                <h3 className="font-medium">Two-Factor Authentication</h3>
-                <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
-              </div>
-              <Button variant="outline">Enable</Button>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50">
-              <div>
-                <h3 className="font-medium">Email Notifications</h3>
-                <p className="text-sm text-gray-400">Choose what updates you want to receive</p>
-              </div>
-              <Button variant="outline">Configure</Button>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50">
-              <div>
-                <h3 className="font-medium">Connected Accounts</h3>
-                <p className="text-sm text-gray-400">Manage your linked social accounts</p>
-              </div>
-              <Button variant="outline">Manage</Button>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg bg-red-900/20">
-              <div>
-                <h3 className="font-medium text-red-400">Delete Account</h3>
-                <p className="text-sm text-red-400/70">Permanently delete your account and all data</p>
-              </div>
-              <Button variant="ghost" className="text-red-400 hover:bg-red-900/40">Delete</Button>
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">
+              Bio
+            </label>
+            <Textarea
+              defaultValue={profile.bio}
+              rows={4}
+            />
           </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
+
+      {/* Social Links */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Social Links</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Link
+          </Button>
+        </div>
+        <div className="space-y-4">
+          {profile.socialLinks.map((link) => (
+            <motion.div
+              key={link.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card className="p-4 hover:bg-zinc-800/50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-zinc-800">
+                    <link.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h4 className="font-medium">{link.platform}</h4>
+                        <p className="text-sm text-zinc-400 truncate">
+                          {link.url}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={() => window.open(link.url, '_blank')}
+                    >
+                      <LinkIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </Card>
     </div>
   )
 } 

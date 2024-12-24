@@ -1,287 +1,259 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { 
-  ArrowUpRight, 
-  ArrowRight, 
-  Calendar, 
-  Filter, 
-  Download,
-  Eye,
-  Heart,
+import * as React from 'react'
+import Image from 'next/image'
+import {
+  CheckCircle2,
+  Circle,
+  Users,
   DollarSign,
-  RefreshCcw,
+  TrendingUp,
+  MessageSquare,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Gift,
+  Settings,
+  ChevronRight,
+  ExternalLink,
+  Plus,
 } from 'lucide-react'
-import { stats, quickActions, recentActivity, topContent } from '@/lib/dashboard-data'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { DashboardCard, DashboardCardHeader, DashboardCardContent } from '@/components/ui/dashboard-card'
+import { usePlatform } from '@/lib/platform-context'
+import { useDashboard } from '@/app/(dashboard)/layout'
+import { cn } from '@/lib/utils'
 
-interface StatCardProps {
-  name: string
-  value: string
-  change: string
-  trend: 'up' | 'down'
-  icon: React.ElementType
-}
+// Setup checklist items
+const setupSteps = [
+  {
+    id: 'onlyfans',
+    title: 'Connect OnlyFans',
+    description: "Already have an OnlyFans? Connect it here. If not, we'll help you create one",
+    completed: false,
+    action: '/dashboard/settings/onlyfans-setup',
+    hasAccount: false,
+    setupStage: 'start',
+    optional: true
+  },
+  {
+    id: 'fansly',
+    title: 'Connect Fansly',
+    description: "Already have a Fansly? Connect it here. If not, we'll help you create one",
+    completed: false,
+    action: '/dashboard/settings/fansly-setup',
+    hasAccount: false,
+    setupStage: 'start',
+    optional: true
+  }
+]
 
-interface QuickActionProps {
-  title: string
-  description: string
-  icon: React.ElementType
-  color: string
-}
+const quickStats = [
+  {
+    title: 'Total Subscribers',
+    value: '1,234',
+    change: '+12.3%',
+    trend: 'up',
+    description: 'vs last month',
+    icon: Users,
+    colorClass: 'text-blue-500',
+    bgColorClass: 'bg-blue-500/10'
+  },
+  {
+    title: 'Revenue',
+    value: '$12,345',
+    change: '+8.2%',
+    trend: 'up',
+    description: 'vs last month',
+    icon: DollarSign,
+    colorClass: 'text-emerald-500',
+    bgColorClass: 'bg-emerald-500/10'
+  },
+  {
+    title: 'Growth Rate',
+    value: '23.8%',
+    change: '-2.1%',
+    trend: 'down',
+    description: 'vs last month',
+    icon: TrendingUp,
+    colorClass: 'text-pink-500',
+    bgColorClass: 'bg-pink-500/10'
+  }
+]
 
-interface ActivityItemProps {
-  type: string
-  message: string
-  timestamp: string
-  icon: React.ElementType
-}
+const quickActions = [
+  {
+    title: 'Create Post',
+    description: 'Share content with your subscribers',
+    href: '/dashboard/posts/new',
+    icon: ImageIcon,
+    colorClass: 'text-blue-500',
+    bgColorClass: 'bg-blue-500/10'
+  },
+  {
+    title: 'Send Message',
+    description: 'Engage with your audience',
+    href: '/dashboard/messages',
+    icon: MessageSquare,
+    colorClass: 'text-emerald-500',
+    bgColorClass: 'bg-emerald-500/10'
+  },
+  {
+    title: 'Create Link',
+    description: 'Share promotional links',
+    href: '/dashboard/links',
+    icon: LinkIcon,
+    colorClass: 'text-pink-500',
+    bgColorClass: 'bg-pink-500/10'
+  },
+  {
+    title: 'Special Offer',
+    description: 'Create limited time offers',
+    href: '/dashboard/offers',
+    icon: Gift,
+    colorClass: 'text-purple-500',
+    bgColorClass: 'bg-purple-500/10'
+  }
+]
 
-interface ContentItemProps {
-  title: string
-  type: string
-  views: string
-  engagement: string
-  revenue: string
-  icon: React.ElementType
-}
-
-const StatCard = ({ name, value, change, trend, icon: Icon }: StatCardProps) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    transition={{ type: "spring", stiffness: 300 }}
-  >
-    <Card className="dashboard-card p-6 hover:shadow-lg transition-shadow relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 bg-gradient-to-br from-gray-800/20 to-transparent rounded-full" />
-      <div className="flex items-center justify-between">
-        <div className="p-2 rounded-lg bg-gray-800/50">
-          <Icon className="h-5 w-5 text-gray-400" />
-        </div>
-        <span className={`flex items-center gap-1 text-sm ${
-          trend === 'up' ? 'text-green-500' : 'text-red-500'
-        }`}>
-          {change}
-          <ArrowUpRight className="h-4 w-4" />
-        </span>
-      </div>
-      <div className="mt-4">
-        <h3 className="text-sm font-medium text-gray-400">{name}</h3>
-        <p className="mt-2 text-3xl font-semibold">{value}</p>
-      </div>
-    </Card>
-  </motion.div>
-)
-
-const QuickAction = ({ title, description, icon: Icon, color }: QuickActionProps) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-  >
-    <Card className="dashboard-card p-6 hover:cursor-pointer hover:shadow-lg transition-all">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className={`p-2 rounded-lg bg-gray-800/50 inline-block mb-4`}>
-            <Icon className={`h-6 w-6 ${color}`} />
-          </div>
-          <h3 className="font-medium">{title}</h3>
-          <p className="text-sm text-gray-400 mt-1">{description}</p>
-        </div>
-        <ArrowRight className="h-5 w-5 text-gray-400" />
-      </div>
-    </Card>
-  </motion.div>
-)
-
-const ActivityItem = ({ message, timestamp, icon: Icon }: ActivityItemProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="flex items-center gap-4 p-4 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 transition-colors cursor-pointer group">
-      <div className="p-2 rounded-lg bg-gray-800 group-hover:bg-gray-700 transition-colors">
-        <Icon className="h-5 w-5 text-blue-500" />
+const SetupStep = React.memo(function SetupStep({ step }: { step: typeof setupSteps[0] }) {
+  return (
+    <div className="flex items-start gap-4 p-4 rounded-lg bg-zinc-900/50">
+      <div className="mt-1">
+        {step.completed ? (
+          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        ) : (
+          <Circle className="h-5 w-5 text-zinc-600" />
+        )}
       </div>
       <div className="flex-1">
-        <p className="font-medium group-hover:text-blue-400 transition-colors">{message}</p>
-        <p className="text-sm text-gray-400">{timestamp}</p>
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium">{step.title}</h3>
+          {step.optional && (
+            <span className="text-xs text-zinc-500">Optional</span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-zinc-400">{step.description}</p>
+        <div className="mt-3">
+          <Button variant="outline" size="sm" className="gap-2">
+            {step.completed ? 'View Settings' : 'Get Started'}
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-      <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
-  </motion.div>
-)
+  )
+})
 
-const ContentItem = ({ title, views, engagement, revenue, icon: Icon, type }: ContentItemProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="flex items-center gap-4 p-4 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 transition-colors cursor-pointer group">
-      <div className="p-2 rounded-lg bg-gray-800 group-hover:bg-gray-700 transition-colors">
-        <Icon className="h-5 w-5 text-pink-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-medium truncate group-hover:text-pink-400 transition-colors">{title}</p>
-          <span className="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400">{type}</span>
+const QuickStat = React.memo(function QuickStat({ stat }: { stat: typeof quickStats[0] }) {
+  return (
+    <DashboardCard className="bg-zinc-900/50 backdrop-blur-sm border-zinc-800/50">
+      <DashboardCardContent>
+        <div className="flex items-center gap-3">
+          <div className={cn('p-2 rounded-lg', stat.bgColorClass)}>
+            <stat.icon className={cn('h-5 w-5', stat.colorClass)} />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-medium text-zinc-400">{stat.title}</span>
+              <span className={cn(
+                'text-sm font-medium',
+                stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'
+              )}>
+                {stat.change}
+              </span>
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-semibold">{stat.value}</span>
+              <span className="text-xs text-zinc-500">{stat.description}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
-          <span className="flex items-center gap-1">
-            <Eye className="h-4 w-4" />
-            {views} views
-          </span>
-          <span className="flex items-center gap-1">
-            <Heart className="h-4 w-4" />
-            {engagement} engagement
-          </span>
-          <span className="flex items-center gap-1">
-            <DollarSign className="h-4 w-4" />
-            {revenue} earned
-          </span>
-        </div>
-      </div>
-      <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-    </div>
-  </motion.div>
-)
+      </DashboardCardContent>
+    </DashboardCard>
+  )
+})
+
+const QuickAction = React.memo(function QuickAction({ action }: { action: typeof quickActions[0] }) {
+  return (
+    <DashboardCard className="hover:bg-zinc-800/50">
+      <a href={action.href} className="block">
+        <DashboardCardContent>
+          <div className="flex items-center gap-3">
+            <div className={cn('p-2 rounded-lg', action.bgColorClass)}>
+              <action.icon className={cn('h-5 w-5', action.colorClass)} />
+            </div>
+            <div>
+              <h3 className="font-medium text-white">{action.title}</h3>
+              <p className="text-sm text-zinc-400">{action.description}</p>
+            </div>
+          </div>
+        </DashboardCardContent>
+      </a>
+    </DashboardCard>
+  )
+})
 
 export default function DashboardPage() {
-  const [timeRange, setTimeRange] = useState('7d')
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { setPageProps } = useDashboard()
+  const { currentPlatform } = usePlatform()
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsRefreshing(false)
-  }
-
-  useEffect(() => {
-    // Simulate initial loading
-    handleRefresh()
-  }, [timeRange])
+  React.useEffect(() => {
+    setPageProps({
+      title: "Dashboard",
+      description: "Overview of your creator business",
+      showPlatformFilter: true,
+      actions: (
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          New Post
+        </Button>
+      )
+    })
+  }, [setPageProps])
 
   return (
-    <div className="flex flex-col gap-8 p-8">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-400">Welcome back! Here&apos;s what&apos;s happening today.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={handleRefresh}
-          >
-            <RefreshCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Calendar className="h-4 w-4" />
-            Last {timeRange}
-            <select 
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="bg-transparent border-none outline-none cursor-pointer"
-            >
-              <option value="24h">24h</option>
-              <option value="7d">7 days</option>
-              <option value="30d">30 days</option>
-              <option value="90d">90 days</option>
-            </select>
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={timeRange}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <StatCard 
-                  name={stat.name}
-                  value={stat.value}
-                  change={stat.change}
-                  trend={stat.trend}
-                  icon={stat.icon}
-                />
-              </motion.div>
+    <div className="space-y-6">
+      {/* Setup Progress */}
+      <DashboardCard>
+        <DashboardCardHeader>
+          <h2 className="text-lg font-semibold">Setup Progress</h2>
+          <p className="text-sm text-zinc-400">Complete these steps to get started</p>
+        </DashboardCardHeader>
+        <DashboardCardContent>
+          <div className="space-y-4">
+            {setupSteps.map((step) => (
+              <SetupStep key={step.id} step={step} />
             ))}
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </DashboardCardContent>
+      </DashboardCard>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {quickActions.map((action, index) => (
-          <motion.div
-            key={action.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <QuickAction {...action} />
-          </motion.div>
+      {/* Stats Overview */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {quickStats.map((stat) => (
+          <QuickStat key={stat.title} stat={stat} />
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="dashboard-card">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Recent Activity</h2>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                View all
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <ActivityItem key={index} {...activity} />
-              ))}
-            </div>
-          </div>
-        </Card>
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action) => (
+            <QuickAction key={action.title} action={action} />
+          ))}
+        </div>
+      </div>
 
-        <Card className="dashboard-card">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Top Performing Content</h2>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                View all
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {topContent.map((content, index) => (
-                <ContentItem key={index} {...content} />
-              ))}
-            </div>
-          </div>
-        </Card>
+      {/* Preview Image */}
+      <div className="relative w-full h-64">
+        <Image
+          src="/dashboard-preview.png"
+          alt="Dashboard Preview"
+          fill
+          className="object-cover rounded-lg"
+          priority
+        />
       </div>
     </div>
   )

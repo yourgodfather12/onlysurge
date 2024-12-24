@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/use-toast'
+import { fetchAPI, APIError, isAPIError } from '@/lib/api-error'
 import { 
   ArrowRight, 
   Instagram, 
@@ -20,6 +22,7 @@ import {
   Lock,
   Sparkles,
 } from 'lucide-react'
+import { LucideIcon } from 'lucide-react'
 
 const platforms = [
   {
@@ -60,11 +63,18 @@ const platforms = [
   },
 ]
 
-const steps = [
+interface OnboardingStep {
+  id: string
+  title: string
+  description: string
+  icon: LucideIcon
+}
+
+const steps: OnboardingStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to OnlySurge! 👋',
-    description: 'Let's get you set up with your account in just a few steps.',
+    description: 'Let\'s get you set up with your account in just a few steps.',
     icon: Globe,
   },
   {
@@ -87,26 +97,37 @@ const steps = [
   },
   {
     id: 'complete',
-    title: 'You're all set! 🎉',
+    title: "You're all set! 🎉",
     description: 'Your account is ready to go.',
     icon: CheckCircle2,
   },
 ]
 
+interface FormData {
+  displayName: string;
+  bio: string;
+  platforms: string[];
+  subscriptionPrice: string;
+  paymentEmail: string;
+  profileImage: File | null;
+}
+
 export default function OnboardingPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     displayName: '',
     bio: '',
-    profileImage: null as File | null,
-    platforms: [] as string[],
+    platforms: [],
     subscriptionPrice: '',
     paymentEmail: '',
+    profileImage: null,
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     // Try to get user data if available
@@ -139,47 +160,108 @@ export default function OnboardingPage() {
   const completeOnboarding = async () => {
     try {
       setIsSubmitting(true)
+      setError(null)
+      
+      // Validate form data
+      if (!validateFormData()) {
+        throw new Error('Please fill in all required fields')
+      }
       
       // Upload profile image if exists
       let profileImageUrl = null
       if (formData.profileImage) {
         const imageFormData = new FormData()
         imageFormData.append('file', formData.profileImage)
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: imageFormData,
-        })
-        if (uploadResponse.ok) {
-          const { url } = await uploadResponse.json()
-          profileImageUrl = url
+        
+        try {
+          const uploadResponse = await fetchAPI<{ url: string }>('/api/upload', {
+            method: 'POST',
+            body: imageFormData,
+            headers: undefined,
+          })
+          profileImageUrl = uploadResponse.url
+        } catch (error) {
+          throw new APIError(
+            'Failed to upload profile image',
+            500,
+            'UPLOAD_ERROR',
+            error
+          )
         }
       }
 
       // Save onboarding data
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          profileImage: profileImageUrl,
-        }),
-      })
-
-      if (response.ok) {
-        // Set onboarding completion cookie
-        document.cookie = 'onboarding_completed=true; path=/'
-        router.push('/dashboard')
-      } else {
-        throw new Error('Failed to complete onboarding')
+      try {
+        await fetchAPI('/api/onboarding/complete', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...formData,
+            profileImage: profileImageUrl,
+          }),
+        })
+      } catch (error) {
+        throw new APIError(
+          'Failed to complete onboarding',
+          500,
+          'ONBOARDING_ERROR',
+          error
+        )
       }
+
+      // Set onboarding completion cookie with secure flags
+      document.cookie = 'onboarding_completed=true; path=/; secure; samesite=strict'
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error) {
       console.error('Error completing onboarding:', error)
-      // Handle error (show toast notification, etc.)
+      
+      let errorMessage = 'An unexpected error occurred'
+      if (isAPIError(error)) {
+        errorMessage = error.message
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      setError(errorMessage)
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const validateFormData = (): boolean => {
+    // Basic validation
+    if (!formData.displayName.trim()) {
+      setError('Display name is required')
+      return false
+    }
+
+    if (!formData.bio.trim()) {
+      setError('Bio is required')
+      return false
+    }
+
+    if (formData.platforms.length === 0) {
+      setError('Please select at least one platform')
+      return false
+    }
+
+    if (!formData.subscriptionPrice || parseFloat(formData.subscriptionPrice) <= 0) {
+      setError('Please enter a valid subscription price')
+      return false
+    }
+
+    if (!formData.paymentEmail || !formData.paymentEmail.includes('@')) {
+      setError('Please enter a valid payment email')
+      return false
+    }
+
+    return true
   }
 
   const validateStep = () => {

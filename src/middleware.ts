@@ -1,57 +1,79 @@
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  // Development bypass
-  if (process.env.NODE_ENV === 'development') {
-    // You can still log the would-be redirects for debugging
-    const { pathname } = request.nextUrl
-    console.log(`[Dev Mode] Would redirect: ${pathname}`)
-    return NextResponse.next()
-  }
+export async function middleware(req: NextRequest) {
+  try {
+    // Create response and Supabase client
+    const res = NextResponse.next()
+    const supabase = createMiddlewareClient({ req, res })
 
-  const { pathname } = request.nextUrl
-  const isAuthenticated = request.cookies.has('auth_token')
-  const hasCompletedOnboarding = request.cookies.has('onboarding_completed')
+    // Security headers
+    res.headers.set('X-Frame-Options', 'DENY')
+    res.headers.set('X-Content-Type-Options', 'nosniff')
+    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    res.headers.set(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+    )
+    
+    // Remove powered by header
+    res.headers.delete('x-powered-by')
 
-  // Public routes that don't require authentication
-  if (pathname.startsWith('/auth') || pathname === '/') {
-    if (isAuthenticated) {
-      if (!hasCompletedOnboarding) {
-        return NextResponse.redirect(new URL('/onboarding', request.url))
-      }
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Rate limiting (basic implementation)
+    const ip = req.ip ?? 'unknown'
+    const rateLimit = await getRateLimit(ip)
+    if (rateLimit.exceeded) {
+      return new NextResponse('Too Many Requests', { status: 429 })
     }
-    return NextResponse.next()
-  }
 
-  // Protected routes
-  if (!isAuthenticated) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
+    // Refresh session if expired
+    const { data: { session } } = await supabase.auth.getSession()
 
-  // Onboarding route
-  if (pathname === '/onboarding') {
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+    // Add user context to headers if authenticated
+    if (session) {
+      res.headers.set('x-user-id', session.user.id)
+      res.headers.set('x-user-role', session.user.role)
     }
-    if (hasCompletedOnboarding) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+
+    // Handle maintenance mode
+    if (process.env.MAINTENANCE_MODE === 'true' && !isMaintenanceExempt(req)) {
+      return NextResponse.rewrite(new URL('/maintenance', req.url))
     }
-    return NextResponse.next()
-  }
 
-  // Dashboard and other protected routes
-  if (!hasCompletedOnboarding) {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
-  }
+    return res
+  } catch (error) {
+    // Log error (implement proper error logging in production)
+    console.error('Middleware error:', error)
 
-  return NextResponse.next()
+    // Return graceful error response
+    return new NextResponse('Internal Server Error', { status: 500 })
+  }
 }
 
-// Optionally exclude more paths from middleware
+// Rate limiting helper
+async function getRateLimit(ip: string) {
+  // Implement proper rate limiting with Redis or similar
+  return { exceeded: false }
+}
+
+// Maintenance mode helper
+function isMaintenanceExempt(req: NextRequest) {
+  // Add logic to exempt certain IPs or paths
+  return false
+}
+
+// Configure which paths the middleware runs on
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|assets|.*\\..*|_next/webpack-hmr).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     * - api/health (health check endpoint)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public|api/health).*)',
   ],
 } 

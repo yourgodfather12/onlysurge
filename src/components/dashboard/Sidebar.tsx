@@ -7,16 +7,16 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   LayoutDashboard,
   BarChart2,
-  Settings,
+  MessageSquare,
   FileText,
+  Link2,
+  Wand2,
+  Zap,
+  Megaphone,
+  Cog,
   LogOut,
   X,
-  MessageSquare,
-  Wand2,
-  Cog,
-  Megaphone,
-  Zap,
-  Link2,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -26,6 +26,7 @@ const navigation = [
   { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
   { name: 'Content Vault', href: '/dashboard/content-vault', icon: FileText },
   { name: 'Links', href: '/dashboard/links', icon: Link2 },
+  { name: 'Subscribers', href: '/dashboard/subscribers', icon: Users },
   { name: 'AI Tools', href: '/dashboard/ai-tools', icon: Wand2 },
   { name: 'Automation', href: '/dashboard/automation', icon: Zap },
   { name: 'Promoting', href: '/dashboard/promoting', icon: Megaphone },
@@ -33,88 +34,85 @@ const navigation = [
 ]
 
 interface SidebarProps {
-  open?: boolean
+  open: boolean
   onClose: () => void
+  className?: string
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+function NavContent() {
   const pathname = usePathname()
 
-  const isActive = (href: string) => {
-    if (href === '/dashboard') {
-      return pathname === href
-    }
-    return pathname.startsWith(href)
-  }
-
-  const NavContent = () => (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center px-4">
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <span className="h-8 w-8 rounded-full bg-blue-500" />
-          <span className="text-xl font-bold text-white">OnlySurge</span>
-        </Link>
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center gap-2 px-6 py-4 lg:px-8">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-pink-500 to-violet-500" />
+        <span className="text-xl font-bold gradient-text">OnlySurge</span>
       </div>
-      <nav className="flex-1 space-y-1 px-2 py-4">
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 px-4 py-4">
         {navigation.map((item) => {
-          const active = isActive(item.href)
+          const isActive = pathname === item.href
           return (
             <Link
               key={item.name}
               href={item.href}
-              onClick={onClose}
               className={cn(
-                'group flex items-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all',
-                active
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                isActive 
+                  ? 'bg-pink-500/10 text-pink-500' 
+                  : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white'
               )}
             >
-              <item.icon
-                className={cn(
-                  'mr-3 h-5 w-5',
-                  active ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                )}
-                aria-hidden="true"
-              />
+              <div className={cn(
+                'flex items-center justify-center w-6 h-6 rounded transition-colors duration-200',
+                isActive ? 'text-pink-500' : 'text-zinc-400 group-hover:text-white'
+              )}>
+                <item.icon className="h-5 w-5" />
+              </div>
               {item.name}
             </Link>
           )
         })}
       </nav>
-      <div className="border-t border-gray-800 px-4 py-4">
+
+      {/* Logout Button */}
+      <div className="border-t border-zinc-800 p-4">
         <button
-          className="group flex w-full items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white"
+          className="group flex w-full items-center rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
           onClick={() => {
             // Handle logout
           }}
         >
-          <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white" />
+          <LogOut className="mr-3 h-5 w-5 text-zinc-400 group-hover:text-white" />
           Logout
         </button>
       </div>
     </div>
   )
+}
 
+export function Sidebar({ open, onClose, className }: SidebarProps) {
   return (
     <>
-      {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col overflow-y-auto bg-gray-900">
+      {/* Desktop Sidebar */}
+      <div className={cn("hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col", className)}>
+        <div className="flex grow flex-col overflow-y-auto glass-effect">
           <NavContent />
         </div>
       </div>
 
-      {/* Mobile sidebar */}
+      {/* Mobile Sidebar */}
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="fixed inset-y-0 left-0 z-50 w-full overflow-y-auto bg-gray-900 p-0 sm:max-w-sm lg:hidden">
-          <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
+        <DialogContent className="fixed inset-y-0 left-0 z-50 w-full overflow-y-auto glass-effect p-0 sm:max-w-sm lg:hidden">
+          <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
             <Link href="/dashboard" onClick={onClose} className="flex items-center space-x-2">
-              <span className="h-8 w-8 rounded-full bg-blue-500" />
-              <span className="text-xl font-bold text-white">OnlySurge</span>
+              <span className="h-8 w-8 rounded-full bg-gradient-to-tr from-pink-500 to-violet-500" />
+              <span className="text-xl font-bold gradient-text">OnlySurge</span>
             </Link>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-800">
-              <X className="h-6 w-6 text-gray-400" aria-hidden="true" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-zinc-800">
+              <X className="h-6 w-6 text-zinc-400" aria-hidden="true" />
               <span className="sr-only">Close sidebar</span>
             </Button>
           </div>

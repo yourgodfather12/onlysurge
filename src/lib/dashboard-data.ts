@@ -1,149 +1,140 @@
-import {
-  Users,
-  DollarSign,
-  Heart,
-  Eye,
-  TrendingUp,
-  MessageSquare,
-  Image as ImageIcon,
-  FileText,
-  Plus,
-  Bell,
-} from 'lucide-react'
+import { LucideIcon, BarChart3, Users, DollarSign, TrendingUp, Sparkles, Bot, Rocket, MessageSquare, Link as LinkIcon } from 'lucide-react'
 
-interface StatItem {
+export interface StatItem {
   name: string
   value: string
   change: string
   trend: 'up' | 'down'
-  icon: React.ElementType
+  icon: LucideIcon
 }
 
-interface QuickAction {
+export interface QuickAction {
   title: string
   description: string
-  icon: React.ElementType
-  color: string
+  icon: LucideIcon
+  color?: string
+  platform?: string
+  href: string
 }
 
-interface ActivityItem {
-  type: string
+export interface ActivityItem {
   message: string
   timestamp: string
-  icon: React.ElementType
+  icon: LucideIcon
+  platform?: string
 }
 
-interface ContentItem {
+export interface ContentItem {
   title: string
-  type: string
   views: string
   engagement: string
   revenue: string
-  icon: React.ElementType
+  icon: LucideIcon
+  platform?: string
 }
 
 export const stats: StatItem[] = [
   {
-    name: 'Total Subscribers',
-    value: '12,345',
-    change: '+12%',
-    trend: 'up',
-    icon: Users,
-  },
-  {
-    name: 'Revenue',
-    value: '$45,678',
-    change: '+23%',
+    name: 'Total Revenue',
+    value: '$12,345',
+    change: '+12.3%',
     trend: 'up',
     icon: DollarSign,
   },
   {
-    name: 'Engagement Rate',
-    value: '8.7%',
-    change: '+5%',
+    name: 'Total Subscribers',
+    value: '1,234',
+    change: '+5.2%',
     trend: 'up',
-    icon: Heart,
+    icon: Users,
   },
   {
-    name: 'Content Views',
-    value: '234.5K',
-    change: '+18%',
+    name: 'Total Views',
+    value: '45.6K',
+    change: '+8.1%',
     trend: 'up',
-    icon: Eye,
+    icon: BarChart3,
+  },
+  {
+    name: 'Growth Rate',
+    value: '+15.2%',
+    change: '+2.4%',
+    trend: 'up',
+    icon: TrendingUp,
   },
 ]
 
 export const quickActions: QuickAction[] = [
   {
-    title: 'Create Content',
-    description: 'Upload and publish new content',
-    icon: Plus,
-    color: 'text-pink-500',
+    title: 'Content Vault',
+    description: 'Manage and organize your content with AI features',
+    icon: Sparkles,
+    color: 'pink',
+    platform: 'onlyfans',
+    href: '/dashboard/content-vault',
   },
   {
-    title: 'View Analytics',
-    description: 'Check your performance metrics',
-    icon: TrendingUp,
-    color: 'text-blue-500',
+    title: 'Profile Builder',
+    description: 'Create and customize your profile',
+    icon: Bot,
+    color: 'purple',
+    platform: 'fansly',
+    href: '/dashboard/profile',
   },
   {
-    title: 'Manage Messages',
-    description: 'Respond to subscriber messages',
-    icon: MessageSquare,
-    color: 'text-purple-500',
+    title: 'Promotions',
+    description: 'Boost your content visibility',
+    icon: Rocket,
+    color: 'blue',
+    platform: 'instagram',
+    href: '/dashboard/promotions',
   },
 ]
 
 export const recentActivity: ActivityItem[] = [
   {
-    type: 'subscriber',
-    message: 'New subscriber joined',
+    message: 'New subscriber joined your premium tier',
     timestamp: '2 minutes ago',
     icon: Users,
+    platform: 'onlyfans',
   },
   {
-    type: 'message',
-    message: 'New message received',
+    message: 'Content post scheduled for tomorrow',
     timestamp: '15 minutes ago',
-    icon: MessageSquare,
+    icon: Sparkles,
+    platform: 'fansly',
   },
   {
-    type: 'content',
-    message: 'Content published successfully',
+    message: 'New message from premium subscriber',
     timestamp: '1 hour ago',
-    icon: ImageIcon,
-  },
-  {
-    type: 'campaign',
-    message: 'Campaign completed',
-    timestamp: '2 hours ago',
-    icon: Bell,
+    icon: MessageSquare,
+    platform: 'onlyfans',
   },
 ]
 
 export const topContent: ContentItem[] = [
   {
-    title: 'Summer Collection 2024',
-    type: 'image',
-    views: '12.5K',
-    engagement: '8.2%',
+    title: 'Summer Photoshoot Collection',
+    views: '12.3K',
+    engagement: '89%',
     revenue: '$1,234',
-    icon: ImageIcon,
+    icon: Sparkles,
+    platform: 'onlyfans',
   },
   {
-    title: 'Behind the Scenes',
-    type: 'video',
+    title: 'Behind the Scenes Video',
     views: '8.7K',
-    engagement: '6.8%',
+    engagement: '92%',
     revenue: '$987',
-    icon: FileText,
+    icon: Sparkles,
+    platform: 'fansly',
   },
   {
-    title: 'Lifestyle Tips & Tricks',
-    type: 'article',
-    views: '5.2K',
-    engagement: '4.5%',
+    title: 'Exclusive Q&A Session',
+    views: '5.4K',
+    engagement: '85%',
     revenue: '$567',
-    icon: FileText,
+    icon: MessageSquare,
+    platform: 'onlyfans',
   },
 ] 

@@ -1,223 +1,349 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { 
-  Wand2,
+import * as React from 'react'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import {
+  Pencil,
   Image as ImageIcon,
-  FileText,
-  Camera,
-  Sparkles,
-  ArrowRight,
-  CircleDollarSign,
-  Instagram as InstagramIcon,
+  Link,
+  Save,
+  Eye,
+  Plus,
+  X,
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PlatformBadge } from '@/components/ui/platform-badge'
+import { useDashboardData } from '@/hooks/use-dashboard-data'
+import { Platform, Profile } from '@/types/dashboard'
 
-// Mock data for profile suggestions
-const suggestions = [
-  {
-    id: 1,
-    type: 'bio',
-    original: 'Content creator sharing lifestyle and fashion tips',
-    suggestion: '🌟 Lifestyle influencer crafting unique experiences | Fashion enthusiast bringing style to life | Join my exclusive community for daily inspiration ✨',
-    platform: 'OnlyFans',
-    confidence: 92,
-  },
-  {
-    id: 2,
-    type: 'hashtags',
-    original: '#fashion #lifestyle #creator',
-    suggestion: '#fashionista #lifestyleinfluencer #contentcreator #styleinspo #fashionlover #dailyinspiration #exclusivecontent',
-    platform: 'Instagram',
-    confidence: 88,
-  },
-]
+interface ProfileSection {
+  id: string
+  title: string
+  content: string
+  platform: Platform
+  isActive: boolean
+}
 
 export default function ProfileBuilderPage() {
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-white">Profile Builder</h2>
-          <p className="text-sm text-gray-400">
-            Create and optimize your profiles with AI assistance
-          </p>
-        </div>
-        <Button>
-          <Wand2 className="w-4 h-4 mr-2" />
-          Generate Profile
-        </Button>
-      </div>
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('onlyfans')
+  const [displayName, setDisplayName] = useState('')
+  const [bio, setBio] = useState('')
+  const [sections, setSections] = useState<ProfileSection[]>([])
+  const [isEditing, setIsEditing] = useState(false)
+  
+  const { data: profiles, isLoading, error } = useDashboardData<Profile>({
+    type: 'profiles',
+    filters: {
+      platform: selectedPlatform
+    }
+  })
 
-      {/* Profile Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Preview</CardTitle>
-          <CardDescription>
-            See how your profile appears across different platforms
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-6">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-gray-600" />
-              </div>
+  const handleAddSection = () => {
+    const newSection: ProfileSection = {
+      id: Date.now().toString(),
+      title: 'New Section',
+      content: '',
+      platform: selectedPlatform,
+      isActive: true
+    }
+    setSections([...sections, newSection])
+  }
+
+  const handleRemoveSection = (id: string) => {
+    setSections(sections.filter(section => section.id !== id))
+  }
+
+  const handleSaveProfile = () => {
+    // In a real app, this would save the profile
+    console.log('Saving profile:', {
+      displayName,
+      bio,
+      sections,
+      platform: selectedPlatform
+    })
+    setIsEditing(false)
+  }
+
+  // Add pageProps to the root layout context
+  React.useEffect(() => {
+    const event = new CustomEvent('updatePageProps', { 
+      detail: {
+        title: "Profile Builder",
+        description: "Create and manage your platform profiles",
+        showPlatformFilter: true,
+        actions: (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              {isEditing ? 'Cancel' : 'Edit'}
+            </Button>
+            {isEditing && (
               <Button
-                variant="secondary"
                 size="sm"
-                className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="rounded-full"
+                onClick={handleSaveProfile}
               >
-                <ImageIcon className="w-4 h-4" />
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
               </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+          </div>
+        )
+      }
+    })
+    window.dispatchEvent(event)
+  }, [isEditing]) // Re-run when isEditing changes since actions depend on it
+
+  return (
+    <div className="grid grid-cols-12 gap-6">
+      {/* Profile Editor */}
+      <div className="col-span-8">
+        <div className="space-y-6">
+          {/* Profile Image */}
+          <div className="relative group">
+            <div className="aspect-[3/1] rounded-xl overflow-hidden bg-zinc-900/50 border border-zinc-800">
+              <img
+                src="/placeholder-cover.jpg"
+                alt="Profile cover"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="flex-1 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-400">Display Name</label>
-                <Input
-                  placeholder="Your display name"
-                  className="mt-1"
-                />
+            {isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute bottom-4 right-4 rounded-full bg-zinc-900/90 hover:bg-zinc-900"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Change Cover
+              </Button>
+            )}
+          </div>
+
+          {/* Profile Info */}
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="relative group">
+                <div className="h-24 w-24 rounded-full overflow-hidden bg-zinc-900/50 border border-zinc-800">
+                  <img
+                    src="/placeholder-avatar.jpg"
+                    alt="Profile avatar"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -bottom-2 -right-2 rounded-full bg-zinc-900/90 hover:bg-zinc-900 h-8 w-8 p-0"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-400">Bio</label>
-                <div className="relative mt-1">
-                  <textarea
-                    className="w-full h-24 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
-                    placeholder="Write something about yourself..."
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Display Name"
+                  disabled={!isEditing}
+                  className="text-lg font-medium bg-zinc-900/50 border-zinc-800"
+                />
+                <div className="flex items-center gap-2">
+                  <PlatformBadge
+                    platform={selectedPlatform}
+                    size="sm"
                   />
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute bottom-2 right-2 opacity-50 hover:opacity-100"
+                    className="rounded-full text-sm text-zinc-400"
                   >
-                    <Wand2 className="w-4 h-4" />
+                    <Link className="h-3 w-3 mr-1" />
+                    username
                   </Button>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-400">Website</label>
-                  <Input
-                    placeholder="Your website URL"
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-400">Location</label>
-                  <Input
-                    placeholder="Your location"
-                    className="mt-1"
-                  />
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* AI Suggestions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Suggestions</CardTitle>
-          <CardDescription>
-            Smart recommendations to improve your profile
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.id}
-                className="p-4 rounded-lg bg-gray-800/50 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm font-medium text-gray-400">
-                      {suggestion.type === 'bio' ? 'Bio Suggestion' : 'Hashtag Suggestion'}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-400">
-                      {suggestion.platform}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {suggestion.confidence}% match
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <div className="text-sm text-gray-400">Original:</div>
-                  <div className="p-3 rounded bg-gray-800">{suggestion.original}</div>
-                  <div className="text-sm text-gray-400">Suggestion:</div>
-                  <div className="p-3 rounded bg-pink-500/10 border border-pink-500/20">
-                    {suggestion.suggestion}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm">
-                    Modify
-                  </Button>
-                  <Button variant="default" size="sm">
-                    Apply
-                  </Button>
-                </div>
-              </div>
-            ))}
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Write a bio..."
+              disabled={!isEditing}
+              className="min-h-[100px] bg-zinc-900/50 border-zinc-800"
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Platform Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Settings</CardTitle>
-          <CardDescription>
-            Customize your profile for each platform
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Button variant="outline" className="h-auto p-4 justify-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                  <CircleDollarSign className="w-5 h-5 text-pink-500" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">OnlyFans</div>
-                  <div className="text-xs text-gray-400">Customize profile</div>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto" />
-              </div>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 justify-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-purple-500" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">Fansly</div>
-                  <div className="text-xs text-gray-400">Customize profile</div>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto" />
-              </div>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 justify-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <InstagramIcon className="w-5 h-5 text-blue-500" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">Instagram</div>
-                  <div className="text-xs text-gray-400">Customize profile</div>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto" />
-              </div>
-            </Button>
+          {/* Profile Sections */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Profile Sections</h3>
+              {isEditing && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handleAddSection}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Section
+                </Button>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <motion.div
+                  key={section.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/50"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        value={section.title}
+                        onChange={(e) => {
+                          const updatedSections = sections.map(s =>
+                            s.id === section.id
+                              ? { ...s, title: e.target.value }
+                              : s
+                          )
+                          setSections(updatedSections)
+                        }}
+                        placeholder="Section Title"
+                        disabled={!isEditing}
+                        className="font-medium bg-zinc-900/50 border-zinc-800"
+                      />
+                      <Textarea
+                        value={section.content}
+                        onChange={(e) => {
+                          const updatedSections = sections.map(s =>
+                            s.id === section.id
+                              ? { ...s, content: e.target.value }
+                              : s
+                          )
+                          setSections(updatedSections)
+                        }}
+                        placeholder="Section content..."
+                        disabled={!isEditing}
+                        className="bg-zinc-900/50 border-zinc-800"
+                      />
+                    </div>
+                    {isEditing && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full h-8 w-8"
+                        onClick={() => handleRemoveSection(section.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+
+              {sections.length === 0 && (
+                <EmptyState
+                  icon={Plus}
+                  title="No sections yet"
+                  description="Add sections to customize your profile"
+                  action={
+                    isEditing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                        onClick={handleAddSection}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Section
+                      </Button>
+                    )
+                  }
+                />
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="col-span-4">
+        <div className="sticky top-6 space-y-6">
+          <div className="rounded-xl border border-zinc-800 overflow-hidden">
+            <div className="p-4 bg-zinc-900/50 border-b border-zinc-800">
+              <h3 className="font-medium">Profile Preview</h3>
+            </div>
+            <div className="p-4">
+              <div className="aspect-[9/16] rounded-lg border border-zinc-800 bg-zinc-900/50">
+                {/* Profile preview would go here */}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-zinc-800 overflow-hidden">
+            <div className="p-4 bg-zinc-900/50 border-b border-zinc-800">
+              <h3 className="font-medium">Platform Links</h3>
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between rounded-full"
+                >
+                  <span className="flex items-center gap-2">
+                    <PlatformBadge
+                      platform="onlyfans"
+                      size="sm"
+                      showLabel={false}
+                    />
+                    OnlyFans Profile
+                  </span>
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between rounded-full"
+                >
+                  <span className="flex items-center gap-2">
+                    <PlatformBadge
+                      platform="fansly"
+                      size="sm"
+                      showLabel={false}
+                    />
+                    Fansly Profile
+                  </span>
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

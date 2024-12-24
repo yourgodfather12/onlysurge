@@ -118,9 +118,10 @@ export default function Hero() {
               <Image
                 src="/dashboard-preview.png"
                 alt="OnlySurge Dashboard"
-                width={800}
-                height={600}
-                className="w-full h-auto"
+                className="w-full h-auto rounded-lg shadow-2xl"
+                width={1920}
+                height={1080}
+                priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-dark/80 to-transparent" />
             </motion.div>
