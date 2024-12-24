@@ -11,6 +11,7 @@ import {
 import { Button } from './button'
 import { Input } from './input'
 import { EmptyState } from './empty-state'
+import { type Table } from "@tanstack/react-table"
 
 interface Column<T> {
   header: string
@@ -20,35 +21,32 @@ interface Column<T> {
   className?: string
 }
 
-interface DataTableProps<T> {
-  data: T[]
-  columns: Column<T>[]
-  isLoading?: boolean
-  emptyState?: {
-    icon?: React.ElementType
-    title: string
-    description: string
-    action?: {
-      label: string
-      onClick: () => void
-    }
-  }
-  onRowClick?: (item: T) => void
-  searchable?: boolean
-  className?: string
+interface DataTableProps<TData> {
+  table: Table<TData>
+  columns: Array<{
+    accessorKey: string
+    header: string
+    cell: (info: { getValue: () => unknown }) => React.ReactNode
+  }>
+  data: TData[]
 }
 
-export function DataTable<T>({
-  data,
+interface DataTableColumnHeaderProps<TData> {
+  column: Column<TData>
+  title: string
+}
+
+interface DataTablePaginationProps<TData> {
+  table: Table<TData>
+}
+
+export function DataTable<TData>({
+  table,
   columns,
-  isLoading,
-  emptyState,
-  onRowClick,
-  searchable = true,
-  className
-}: DataTableProps<T>) {
+  data,
+}: DataTableProps<TData>) {
   const [sortConfig, setSortConfig] = React.useState<{
-    key: keyof T | string
+    key: keyof TData | string
     direction: 'asc' | 'desc'
   } | null>(null)
   
@@ -80,7 +78,7 @@ export function DataTable<T>({
   }, [sortedData, searchQuery])
   
   // Handle sort click
-  const handleSort = (key: keyof T | string) => {
+  const handleSort = (key: keyof TData | string) => {
     setSortConfig(current => {
       if (!current || current.key !== key) {
         return { key, direction: 'asc' }
@@ -93,7 +91,7 @@ export function DataTable<T>({
   }
   
   // Get sort icon
-  const getSortIcon = (key: keyof T | string) => {
+  const getSortIcon = (key: keyof TData | string) => {
     if (!sortConfig || sortConfig.key !== key) {
       return <ChevronsUpDown className="h-4 w-4 text-zinc-400" />
     }
@@ -198,4 +196,17 @@ export function DataTable<T>({
       </div>
     </div>
   )
+} 
+
+export function DataTableColumnHeader<TData>({
+  column,
+  title,
+}: DataTableColumnHeaderProps<TData>) {
+  // ... rest of the code
+}
+
+export function DataTablePagination<TData>({
+  table,
+}: DataTablePaginationProps<TData>) {
+  // ... rest of the code
 } 

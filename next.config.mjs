@@ -28,18 +28,6 @@ const nextConfig = {
   output: 'standalone',
   experimental: {
     optimizeCss: true,
-    turbo: {
-      rules: {
-        // Prevent accidental server/client boundary violations
-        '*.server.*': {
-          env: ['node', 'edge'],
-        },
-        '*.client.*': {
-          env: ['browser', 'worker'],
-        },
-      },
-    },
-    serverActions: true,
     serverComponentsExternalPackages: [],
     optimizePackageImports: [
       '@headlessui/react',

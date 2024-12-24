@@ -414,25 +414,58 @@ export default function OnboardingPage() {
                         )}
                       </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Display Name
-                      </label>
-                      <Input
-                        placeholder="Enter your display name"
-                        value={formData.displayName}
-                        onChange={e => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Bio
-                      </label>
-                      <Input
-                        placeholder="Tell us about yourself"
-                        value={formData.bio}
-                        onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="displayName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Display Name
+                        </label>
+                        <input
+                          id="displayName"
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter your display name"
+                          value={formData.displayName}
+                          onChange={e => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="username" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Username
+                        </label>
+                        <input
+                          id="username"
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter your username"
+                          value={formData.displayName}
+                          onChange={e => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="bio" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Bio
+                        </label>
+                        <textarea
+                          id="bio"
+                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Tell us about yourself"
+                          value={formData.bio}
+                          onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label htmlFor="website" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Website
+                        </label>
+                        <input
+                          id="website"
+                          type="url"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter your website URL"
+                          value={formData.displayName}
+                          onChange={e => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

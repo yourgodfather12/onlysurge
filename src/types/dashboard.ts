@@ -1,16 +1,22 @@
 import { ReactNode } from 'react'
 
-export type Platform = {
+export interface Platform {
   id: string
   name: string
-  type: 'onlyfans' | 'fansly' | 'manyvids' | 'loyalfans'
-  icon: ReactNode
-  status: 'connected' | 'disconnected' | 'connecting' | 'error'
-  metrics: {
-    subscribers: number
-    views: number
-    revenue: number
-  }
+  status: 'online' | 'offline' | 'maintenance'
+  icon: string
+}
+
+export interface PlatformStats {
+  id: string
+  platformId: string
+  followers: number
+  likes: number
+  comments: number
+  shares: number
+  revenue: number
+  period: 'day' | 'week' | 'month' | 'year'
+  timestamp: string
 }
 
 export type ContentType = 'image' | 'video' | 'text' | 'audio'

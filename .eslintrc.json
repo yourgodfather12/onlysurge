@@ -1,0 +1,43 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jest/recommended",
+    "plugin:jsx-a11y/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "jest", "jsx-a11y"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["warn", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "react/no-unescaped-entities": "off",
+    "jsx-a11y/anchor-is-valid": "warn",
+    "jsx-a11y/label-has-associated-control": ["warn", {
+      "labelComponents": [],
+      "labelAttributes": [],
+      "controlComponents": [],
+      "assert": "either",
+      "depth": 25
+    }],
+    "@next/next/no-img-element": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "jest/no-conditional-expect": "warn"
+  },
+  "env": {
+    "jest": true,
+    "browser": true,
+    "node": true
+  },
+  "settings": {
+    "jest": {
+      "version": "detect"
+    },
+    "jsx-a11y": {
+      "components": {
+        "Image": "img"
+      }
+    }
+  }
+} 

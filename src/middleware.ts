@@ -1,12 +1,29 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { CookieOptions } from '@supabase/ssr'
 
 export async function middleware(req: NextRequest) {
   try {
     // Create response and Supabase client
     const res = NextResponse.next()
-    const supabase = createMiddlewareClient({ req, res })
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            res.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: CookieOptions) {
+            res.cookies.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
 
     // Security headers
     res.headers.set('X-Frame-Options', 'DENY')
@@ -21,8 +38,8 @@ export async function middleware(req: NextRequest) {
     res.headers.delete('x-powered-by')
 
     // Rate limiting (basic implementation)
-    const ip = req.ip ?? 'unknown'
-    const rateLimit = await getRateLimit(ip)
+    const clientIp = req.ip ?? 'unknown'
+    const rateLimit = await getRateLimit(clientIp)
     if (rateLimit.exceeded) {
       return new NextResponse('Too Many Requests', { status: 429 })
     }
@@ -37,7 +54,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Handle maintenance mode
-    if (process.env.MAINTENANCE_MODE === 'true' && !isMaintenanceExempt(req)) {
+    if (process.env.MAINTENANCE_MODE === 'true' && !isMaintenanceExempt(req.url)) {
       return NextResponse.rewrite(new URL('/maintenance', req.url))
     }
 
@@ -58,9 +75,9 @@ async function getRateLimit(ip: string) {
 }
 
 // Maintenance mode helper
-function isMaintenanceExempt(req: NextRequest) {
-  // Add logic to exempt certain IPs or paths
-  return false
+function isMaintenanceExempt(url: string): boolean {
+  // Add logic to exempt certain paths
+  return url.includes('/api/health')
 }
 
 // Configure which paths the middleware runs on

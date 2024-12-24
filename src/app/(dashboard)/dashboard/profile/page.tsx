@@ -165,38 +165,40 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">
+              <label htmlFor="username" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Username
               </label>
               <Input
+                id="username"
+                type="text"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Enter your username"
                 startDecorator={<User className="h-4 w-4 text-zinc-400" />}
                 defaultValue={profile.username}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">
-                Display Name
+              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Email
               </label>
               <Input
-                startDecorator={<User className="h-4 w-4 text-zinc-400" />}
-                defaultValue={profile.displayName}
+                id="email"
+                type="email"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Enter your email"
+                startDecorator={<Mail className="h-4 w-4 text-zinc-400" />}
+                defaultValue={profile.email}
               />
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">
-              Email
-            </label>
-            <Input
-              startDecorator={<Mail className="h-4 w-4 text-zinc-400" />}
-              defaultValue={profile.email}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">
+            <label htmlFor="bio" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Bio
             </label>
             <Textarea
+              id="bio"
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Tell us about yourself"
               defaultValue={profile.bio}
               rows={4}
             />

@@ -1,128 +1,49 @@
 'use client'
 
-import * as React from 'react'
-import { usePathname } from 'next/navigation'
-import { Sidebar } from '@/components/dashboard/Sidebar'
-import { TopNav } from '@/components/dashboard/TopNav'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { LoadingSkeleton } from '@/components/ui/loading-skeleton'
+import { useState, createContext, useContext } from 'react'
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { usePlatformStore } from '@/store/platform-store'
 
-interface PageProps {
-  title?: string
-  description?: string
-  showPlatformFilter?: boolean
-  actions?: React.ReactNode
+interface DashboardContextValue {
+  pageProps: {
+    title: string
+    description?: string
+    showPlatformFilter?: boolean
+    actions?: React.ReactNode
+  }
+  setPageProps: (props: DashboardContextValue['pageProps']) => void
 }
 
-interface DashboardContextType {
-  pageProps: PageProps
-  setPageProps: (props: PageProps) => void
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-  isLoading: boolean
-}
-
-const DashboardContext = React.createContext<DashboardContextType | undefined>(undefined)
+const DashboardContext = createContext<DashboardContextValue | undefined>(undefined)
 
 export function useDashboard() {
-  const context = React.useContext(DashboardContext)
+  const context = useContext(DashboardContext)
   if (!context) {
-    throw new Error('useDashboard must be used within a DashboardProvider')
+    throw new Error('useDashboard must be used within DashboardProvider')
   }
   return context
 }
 
-interface DashboardRootLayoutProps {
+export default function DashboardLayout({
+  children,
+}: {
   children: React.ReactNode
-}
-
-export default function DashboardRootLayout({ children }: DashboardRootLayoutProps) {
-  const pathname = usePathname()
-  const [pageProps, setPageProps] = React.useState<PageProps>({})
-  const [isLoading, setIsLoading] = React.useState(false)
-  
-  // Initialize sidebar state from localStorage
-  const [sidebarOpen, setSidebarOpen] = React.useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarOpen')
-      return saved ? JSON.parse(saved) : false
-    }
-    return false
+}) {
+  const [pageProps, setPageProps] = useState<DashboardContextValue['pageProps']>({
+    title: 'Dashboard',
+    showPlatformFilter: true,
   })
 
-  // Persist sidebar state
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sidebarOpen', JSON.stringify(sidebarOpen))
-    }
-  }, [sidebarOpen])
-
-  // Reset page props and show loading state on route change
-  React.useEffect(() => {
-    let mounted = true
-
-    const handleRouteChange = () => {
-      setIsLoading(true)
-      setPageProps({})
-      
-      // Simulate page load
-      const timer = setTimeout(() => {
-        if (mounted) {
-          setIsLoading(false)
-        }
-      }, 500)
-
-      return () => clearTimeout(timer)
-    }
-
-    handleRouteChange()
-
-    return () => {
-      mounted = false
-    }
-  }, [pathname])
-
-  const handleSidebarClose = React.useCallback(() => {
-    setSidebarOpen(false)
-  }, [])
-
-  const handleSidebarOpen = React.useCallback(() => {
-    setSidebarOpen(true)
-  }, [])
-
-  const contextValue = React.useMemo(() => ({
-    pageProps,
-    setPageProps,
-    sidebarOpen,
-    setSidebarOpen,
-    isLoading
-  }), [pageProps, sidebarOpen, isLoading])
-
   return (
-    <ErrorBoundary>
-      <DashboardContext.Provider value={contextValue}>
-        <div className="min-h-screen bg-zinc-950">
-          <Sidebar open={sidebarOpen} onClose={handleSidebarClose} />
-          <div className="lg:pl-64">
-            <TopNav 
-              onOpenSidebar={handleSidebarOpen}
-              title={pageProps.title}
-              description={pageProps.description}
-              showPlatformFilter={pageProps.showPlatformFilter}
-              actions={pageProps.actions}
-            />
-            <main className="py-10">
-              <div className="px-4 sm:px-6 lg:px-8">
-                {isLoading ? (
-                  <LoadingSkeleton />
-                ) : (
-                  children
-                )}
-              </div>
-            </main>
-          </div>
+    <DashboardContext.Provider value={{ pageProps, setPageProps }}>
+      <div className="flex min-h-screen">
+        <DashboardSidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="p-6">{children}</main>
         </div>
-      </DashboardContext.Provider>
-    </ErrorBoundary>
+      </div>
+    </DashboardContext.Provider>
   )
 } 

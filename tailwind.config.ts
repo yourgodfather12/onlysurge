@@ -19,6 +19,17 @@ const config: Config = {
           pink: '#FF1B6B',
           purple: '#9D4EDD',
           blue: '#45CAFF',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
         neon: {
           pink: '#FF1B6B',
@@ -42,6 +53,10 @@ const config: Config = {
         'float': 'float 3s ease-in-out infinite',
         'glow': 'glow 1.5s ease-in-out infinite alternate',
         'particle-float': 'particle-float 10s ease-in-out infinite',
+        'fade-in': 'fade-in 0.5s ease-out',
+        'fade-out': 'fade-out 0.5s ease-out',
+        'slide-in': 'slide-in 0.5s ease-out',
+        'slide-out': 'slide-out 0.5s ease-out',
       },
       keyframes: {
         'gradient-y': {
@@ -110,6 +125,22 @@ const config: Config = {
             transform: 'translate(-10px, -10px) rotate(270deg)',
           },
         },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'fade-out': {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+        'slide-in': {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        'slide-out': {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(100%)' },
+        },
       },
       boxShadow: {
         'neon-pink': '0 0 5px theme(colors.neon.pink), 0 0 20px theme(colors.neon.pink)',
@@ -118,7 +149,14 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
 }
 
 export default config

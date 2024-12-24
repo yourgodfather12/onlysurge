@@ -1,45 +1,83 @@
 'use client'
 
 import * as React from 'react'
-import { Platform } from '@/types/dashboard'
-import { usePlatform } from '@/lib/platform-context'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { usePlatformStore } from '@/store/platform-store'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { PlatformBadge } from './platform-badge'
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
-export const PlatformSelect = React.memo(function PlatformSelect() {
-  const { currentPlatform, setCurrentPlatform, platforms } = usePlatform()
-
-  const handlePlatformSelect = React.useCallback((platform: Platform) => {
-    setCurrentPlatform(platform)
-  }, [setCurrentPlatform])
+export function PlatformSelect() {
+  const [open, setOpen] = React.useState(false)
+  const { currentPlatform, setCurrentPlatform, platforms } = usePlatformStore()
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-[200px] justify-start">
-          {currentPlatform ? (
-            <PlatformBadge platform={currentPlatform} />
-          ) : (
-            <span>Select Platform</span>
-          )}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between"
+        >
+          {currentPlatform === 'all'
+            ? 'All Platforms'
+            : currentPlatform?.name || 'Select platform...'}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[200px]">
-        {platforms.map(platform => (
-          <DropdownMenuItem
-            key={platform.id}
-            onClick={() => handlePlatformSelect(platform)}
-          >
-            <PlatformBadge platform={platform} showStatus />
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search platform..." />
+          <CommandEmpty>No platform found.</CommandEmpty>
+          <CommandGroup>
+            <CommandItem
+              onSelect={() => {
+                setCurrentPlatform('all')
+                setOpen(false)
+              }}
+            >
+              <Check
+                className={cn(
+                  'mr-2 h-4 w-4',
+                  currentPlatform === 'all' ? 'opacity-100' : 'opacity-0'
+                )}
+              />
+              All Platforms
+            </CommandItem>
+            {platforms.map((platform) => (
+              <CommandItem
+                key={platform.id}
+                onSelect={() => {
+                  setCurrentPlatform(platform)
+                  setOpen(false)
+                }}
+              >
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    currentPlatform?.id === platform.id
+                      ? 'opacity-100'
+                      : 'opacity-0'
+                  )}
+                />
+                {platform.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
-}) 
+} 

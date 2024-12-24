@@ -214,11 +214,9 @@ export default function ContactPage() {
               <div className="relative bg-dark-light/30 backdrop-blur-xl p-6 rounded-xl border border-white/10">
                 <div className="aspect-video rounded-lg overflow-hidden bg-dark-lighter">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0673599087037!2d-122.39721892361191!3d37.79285311631757!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085806285ddb1a3%3A0xad9ca7333b4399a5!2s100%20Market%20St%2C%20San%20Francisco%2C%20CA%2094105!5e0!3m2!1sen!2sus!4v1690143398015!5m2!1sen!2sus"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0636441988815!2d-122.41941708468186!3d37.77492977975791!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c6c8f4459%3A0xb10ed6d9b5050fa5!2sTwitter+HQ!5e0!3m2!1sen!2sus!4v1564164514693!5m2!1sen!2sus"
+                    className="w-full h-96 rounded-lg"
+                    title="OnlySurge Office Location Map"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
