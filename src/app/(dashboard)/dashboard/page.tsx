@@ -1,260 +1,491 @@
 'use client'
 
-import * as React from 'react'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import {
-  CheckCircle2,
-  Circle,
+  BarChart3,
+  TrendingUp,
   Users,
   DollarSign,
-  TrendingUp,
+  Heart,
   MessageSquare,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Gift,
-  Settings,
+  PlayCircle,
+  ArrowUpRight,
+  ArrowDownRight,
   ChevronRight,
-  ExternalLink,
-  Plus,
+  Clock,
+  Star,
+  Bell,
+  Zap,
+  Eye,
+  Image as ImageIcon,
+  Sparkles,
+  Trophy
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { DashboardCard, DashboardCardHeader, DashboardCardContent } from '@/components/ui/dashboard-card'
-import { usePlatform } from '@/lib/platform-context'
 import { useDashboard } from '@/app/(dashboard)/layout'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { PlatformBadge } from '@/components/ui/platform-badge'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
-// Setup checklist items
-const setupSteps = [
+const metrics = [
   {
-    id: 'onlyfans',
-    title: 'Connect OnlyFans',
-    description: "Already have an OnlyFans? Connect it here. If not, we'll help you create one",
-    completed: false,
-    action: '/dashboard/settings/onlyfans-setup',
-    hasAccount: false,
-    setupStage: 'start',
-    optional: true
+    title: 'Total Revenue',
+    value: '$12,845.00',
+    change: '+12.5%',
+    trend: 'up',
+    icon: DollarSign,
+    color: 'emerald',
+    description: 'Monthly recurring revenue'
   },
-  {
-    id: 'fansly',
-    title: 'Connect Fansly',
-    description: "Already have a Fansly? Connect it here. If not, we'll help you create one",
-    completed: false,
-    action: '/dashboard/settings/fansly-setup',
-    hasAccount: false,
-    setupStage: 'start',
-    optional: true
-  }
-]
-
-const quickStats = [
   {
     title: 'Total Subscribers',
-    value: '1,234',
-    change: '+12.3%',
-    trend: 'up',
-    description: 'vs last month',
-    icon: Users,
-    colorClass: 'text-blue-500',
-    bgColorClass: 'bg-blue-500/10'
-  },
-  {
-    title: 'Revenue',
-    value: '$12,345',
+    value: '2,845',
     change: '+8.2%',
     trend: 'up',
-    description: 'vs last month',
-    icon: DollarSign,
-    colorClass: 'text-emerald-500',
-    bgColorClass: 'bg-emerald-500/10'
+    icon: Users,
+    color: 'blue',
+    description: 'Active subscribers'
   },
   {
-    title: 'Growth Rate',
-    value: '23.8%',
+    title: 'Engagement Rate',
+    value: '24.5%',
     change: '-2.1%',
     trend: 'down',
-    description: 'vs last month',
-    icon: TrendingUp,
-    colorClass: 'text-pink-500',
-    bgColorClass: 'bg-pink-500/10'
+    icon: Heart,
+    color: 'pink',
+    description: 'Average engagement'
+  },
+  {
+    title: 'Content Views',
+    value: '845.2K',
+    change: '+18.7%',
+    trend: 'up',
+    icon: Eye,
+    color: 'purple',
+    description: 'Total content views'
   }
 ]
 
-const quickActions = [
+const recentActivity = [
   {
-    title: 'Create Post',
-    description: 'Share content with your subscribers',
-    href: '/dashboard/posts/new',
-    icon: ImageIcon,
-    colorClass: 'text-blue-500',
-    bgColorClass: 'bg-blue-500/10'
+    id: '1',
+    type: 'subscription',
+    title: 'New Subscriber',
+    description: 'John D. subscribed to your profile',
+    timestamp: '2 minutes ago',
+    platform: {
+      id: 'onlyfans',
+      type: 'onlyfans',
+      name: 'OnlyFans',
+      icon: null,
+      status: 'connected'
+    }
   },
   {
-    title: 'Send Message',
-    description: 'Engage with your audience',
-    href: '/dashboard/messages',
-    icon: MessageSquare,
-    colorClass: 'text-emerald-500',
-    bgColorClass: 'bg-emerald-500/10'
+    id: '2',
+    type: 'message',
+    title: 'New Message',
+    description: 'You have a new message from Sarah',
+    timestamp: '15 minutes ago',
+    platform: {
+      id: 'fansly',
+      type: 'fansly',
+      name: 'Fansly',
+      icon: null,
+      status: 'connected'
+    }
   },
   {
-    title: 'Create Link',
-    description: 'Share promotional links',
-    href: '/dashboard/links',
-    icon: LinkIcon,
-    colorClass: 'text-pink-500',
-    bgColorClass: 'bg-pink-500/10'
-  },
-  {
-    title: 'Special Offer',
-    description: 'Create limited time offers',
-    href: '/dashboard/offers',
-    icon: Gift,
-    colorClass: 'text-purple-500',
-    bgColorClass: 'bg-purple-500/10'
+    id: '3',
+    type: 'tip',
+    title: 'New Tip',
+    description: 'Mike sent you a $50.00 tip',
+    timestamp: '1 hour ago',
+    platform: {
+      id: 'onlyfans',
+      type: 'onlyfans',
+      name: 'OnlyFans',
+      icon: null,
+      status: 'connected'
+    }
   }
 ]
 
-const SetupStep = React.memo(function SetupStep({ step }: { step: typeof setupSteps[0] }) {
-  return (
-    <div className="flex items-start gap-4 p-4 rounded-lg bg-zinc-900/50">
-      <div className="mt-1">
-        {step.completed ? (
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-        ) : (
-          <Circle className="h-5 w-5 text-zinc-600" />
-        )}
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium">{step.title}</h3>
-          {step.optional && (
-            <span className="text-xs text-zinc-500">Optional</span>
-          )}
-        </div>
-        <p className="mt-1 text-sm text-zinc-400">{step.description}</p>
-        <div className="mt-3">
-          <Button variant="outline" size="sm" className="gap-2">
-            {step.completed ? 'View Settings' : 'Get Started'}
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-})
+const topContent = [
+  {
+    id: '1',
+    title: 'Summer Vibes 🌞',
+    type: 'image',
+    stats: {
+      likes: 2453,
+      comments: 145,
+      revenue: 845.00
+    },
+    thumbnail: '/placeholder.jpg',
+    trend: 'up',
+    change: '+15%'
+  },
+  {
+    id: '2',
+    title: 'Beach Day 🏖️',
+    type: 'video',
+    stats: {
+      likes: 1845,
+      comments: 98,
+      revenue: 645.00
+    },
+    thumbnail: '/placeholder.jpg',
+    trend: 'up',
+    change: '+12%'
+  },
+  {
+    id: '3',
+    title: 'Workout Session 💪',
+    type: 'image',
+    stats: {
+      likes: 1654,
+      comments: 76,
+      revenue: 445.00
+    },
+    thumbnail: '/placeholder.jpg',
+    trend: 'down',
+    change: '-5%'
+  }
+]
 
-const QuickStat = React.memo(function QuickStat({ stat }: { stat: typeof quickStats[0] }) {
-  return (
-    <DashboardCard className="bg-zinc-900/50 backdrop-blur-sm border-zinc-800/50">
-      <DashboardCardContent>
-        <div className="flex items-center gap-3">
-          <div className={cn('p-2 rounded-lg', stat.bgColorClass)}>
-            <stat.icon className={cn('h-5 w-5', stat.colorClass)} />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium text-zinc-400">{stat.title}</span>
-              <span className={cn(
-                'text-sm font-medium',
-                stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'
-              )}>
-                {stat.change}
-              </span>
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold">{stat.value}</span>
-              <span className="text-xs text-zinc-500">{stat.description}</span>
-            </div>
-          </div>
-        </div>
-      </DashboardCardContent>
-    </DashboardCard>
-  )
-})
-
-const QuickAction = React.memo(function QuickAction({ action }: { action: typeof quickActions[0] }) {
-  return (
-    <DashboardCard className="hover:bg-zinc-800/50">
-      <a href={action.href} className="block">
-        <DashboardCardContent>
-          <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', action.bgColorClass)}>
-              <action.icon className={cn('h-5 w-5', action.colorClass)} />
-            </div>
-            <div>
-              <h3 className="font-medium text-white">{action.title}</h3>
-              <p className="text-sm text-zinc-400">{action.description}</p>
-            </div>
-          </div>
-        </DashboardCardContent>
-      </a>
-    </DashboardCard>
-  )
-})
+const notifications = [
+  {
+    id: '1',
+    title: 'Profile Completion',
+    description: 'Complete your profile to increase visibility',
+    type: 'action',
+    priority: 'high',
+    icon: Sparkles
+  },
+  {
+    id: '2',
+    title: 'New Feature Available',
+    description: 'Try out our new AI content generator',
+    type: 'info',
+    priority: 'medium',
+    icon: Zap
+  },
+  {
+    id: '3',
+    title: 'Subscription Milestone',
+    description: "You're close to reaching 3,000 subscribers!",
+    type: 'achievement',
+    priority: 'low',
+    icon: Trophy
+  }
+]
 
 export default function DashboardPage() {
   const { setPageProps } = useDashboard()
-  const { currentPlatform } = usePlatform()
+  const [timeframe, setTimeframe] = useState<'24h' | '7d' | '30d'>('24h')
 
-  React.useEffect(() => {
+  useEffect(() => {
     setPageProps({
-      title: "Dashboard",
-      description: "Overview of your creator business",
+      title: "Overview",
+      description: "Your dashboard at a glance",
       showPlatformFilter: true,
       actions: (
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Post
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-full",
+              timeframe === '24h' && "bg-white/5"
+            )}
+            onClick={() => setTimeframe('24h')}
+          >
+            24h
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-full",
+              timeframe === '7d' && "bg-white/5"
+            )}
+            onClick={() => setTimeframe('7d')}
+          >
+            7d
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-full",
+              timeframe === '30d' && "bg-white/5"
+            )}
+            onClick={() => setTimeframe('30d')}
+          >
+            30d
+          </Button>
+        </div>
       )
     })
-  }, [setPageProps])
+  }, [setPageProps, timeframe])
 
   return (
-    <div className="space-y-6">
-      {/* Setup Progress */}
-      <DashboardCard>
-        <DashboardCardHeader>
-          <h2 className="text-lg font-semibold">Setup Progress</h2>
-          <p className="text-sm text-zinc-400">Complete these steps to get started</p>
-        </DashboardCardHeader>
-        <DashboardCardContent>
-          <div className="space-y-4">
-            {setupSteps.map((step) => (
-              <SetupStep key={step.id} step={step} />
-            ))}
-          </div>
-        </DashboardCardContent>
-      </DashboardCard>
-
-      {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {quickStats.map((stat) => (
-          <QuickStat key={stat.title} stat={stat} />
+    <div className="space-y-8 px-4 py-8 md:px-8 2xl:px-12">
+      {/* Quick Stats */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <motion.div
+            key={metric.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <Card className="relative overflow-hidden p-6 bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-900/60 transition-colors group">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+              <div className="relative flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-zinc-400">{metric.title}</p>
+                  <h3 className="text-2xl font-semibold text-white mt-2 tracking-tight">{metric.value}</h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "rounded-full font-medium",
+                        metric.trend === 'up' 
+                          ? 'bg-emerald-500/10 text-emerald-500' 
+                          : 'bg-red-500/10 text-red-500'
+                      )}
+                    >
+                      {metric.trend === 'up' ? (
+                        <ArrowUpRight className="h-3 w-3 mr-1" />
+                      ) : (
+                        <ArrowDownRight className="h-3 w-3 mr-1" />
+                      )}
+                      {metric.change}
+                    </Badge>
+                    <span className="text-xs text-zinc-500">vs last {timeframe}</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2">{metric.description}</p>
+                </div>
+                <div className={cn(
+                  "p-3 rounded-xl ring-1 ring-inset ring-white/10 transition-colors",
+                  metric.color === 'emerald' && "bg-emerald-500/10 group-hover:bg-emerald-500/20",
+                  metric.color === 'blue' && "bg-blue-500/10 group-hover:bg-blue-500/20",
+                  metric.color === 'pink' && "bg-pink-500/10 group-hover:bg-pink-500/20",
+                  metric.color === 'purple' && "bg-purple-500/10 group-hover:bg-purple-500/20"
+                )}>
+                  <metric.icon className={cn(
+                    "h-5 w-5",
+                    metric.color === 'emerald' && "text-emerald-500",
+                    metric.color === 'blue' && "text-blue-500",
+                    metric.color === 'pink' && "text-pink-500",
+                    metric.color === 'purple' && "text-purple-500"
+                  )} />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => (
-            <QuickAction key={action.title} action={action} />
-          ))}
-        </div>
+      {/* Recent Activity & Top Content */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Activity */}
+        <Card className="relative overflow-hidden p-6 bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-900/60 transition-colors group">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-6">
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+                <p className="text-sm text-zinc-400">Latest updates from your profiles</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full hover:bg-white/5"
+                onClick={() => toast.info('Opening activity feed...')}
+              >
+                View All
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="space-y-6">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start gap-4 group/item">
+                  <div className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    activity.type === 'subscription' && "bg-emerald-500/10 group-hover/item:bg-emerald-500/20",
+                    activity.type === 'message' && "bg-blue-500/10 group-hover/item:bg-blue-500/20",
+                    activity.type === 'tip' && "bg-purple-500/10 group-hover/item:bg-purple-500/20"
+                  )}>
+                    {activity.type === 'subscription' && <Users className="h-4 w-4 text-emerald-500" />}
+                    {activity.type === 'message' && <MessageSquare className="h-4 w-4 text-blue-500" />}
+                    {activity.type === 'tip' && <DollarSign className="h-4 w-4 text-purple-500" />}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white">{activity.title}</p>
+                        <PlatformBadge platform={activity.platform} size="sm" />
+                      </div>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {activity.timestamp}
+                      </span>
+                    </div>
+                    <p className="text-sm text-zinc-400">{activity.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Top Content */}
+        <Card className="relative overflow-hidden p-6 bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-900/60 transition-colors group">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-6">
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-white">Top Content</h3>
+                <p className="text-sm text-zinc-400">Your best performing content</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full hover:bg-white/5"
+                onClick={() => toast.info('Opening content analytics...')}
+              >
+                View All
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="space-y-6">
+              {topContent.map((content) => (
+                <div key={content.id} className="group/item flex items-center gap-4">
+                  <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-zinc-800 ring-1 ring-white/10">
+                    <img
+                      src={content.thumbnail}
+                      alt={content.title}
+                      className="h-full w-full object-cover transition-transform group-hover/item:scale-110"
+                    />
+                    {content.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <PlayCircle className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-white">{content.title}</h4>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "rounded-full font-medium",
+                          content.trend === 'up' 
+                            ? 'bg-emerald-500/10 text-emerald-500' 
+                            : 'bg-red-500/10 text-red-500'
+                        )}
+                      >
+                        {content.trend === 'up' ? (
+                          <ArrowUpRight className="h-3 w-3 mr-1" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3 mr-1" />
+                        )}
+                        {content.change}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="text-xs text-zinc-400 flex items-center gap-1">
+                        <Heart className="h-3 w-3" />
+                        {content.stats.likes.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-zinc-400 flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {content.stats.comments.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-zinc-400 flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        ${content.stats.revenue.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
       </div>
 
-      {/* Preview Image */}
-      <div className="relative w-full h-64">
-        <Image
-          src="/dashboard-preview.png"
-          alt="Dashboard Preview"
-          fill
-          className="object-cover rounded-lg"
-          priority
-        />
-      </div>
+      {/* Notifications */}
+      <Card className="relative overflow-hidden p-6 bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-900/60 transition-colors group">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-white">Notifications</h3>
+              <p className="text-sm text-zinc-400">Important updates and alerts</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full hover:bg-white/5"
+              onClick={() => toast.info('Opening notification settings...')}
+            >
+              <Bell className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={cn(
+                  "relative overflow-hidden p-4 rounded-lg border border-zinc-800/50 transition-colors group/item",
+                  notification.priority === 'high' && "bg-red-500/5 hover:bg-red-500/10 border-red-500/10",
+                  notification.priority === 'medium' && "bg-yellow-500/5 hover:bg-yellow-500/10 border-yellow-500/10",
+                  notification.priority === 'low' && "bg-blue-500/5 hover:bg-blue-500/10 border-blue-500/10"
+                )}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+                <div className="relative flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      "mt-0.5 p-2 rounded-lg",
+                      notification.priority === 'high' && "bg-red-500/10",
+                      notification.priority === 'medium' && "bg-yellow-500/10",
+                      notification.priority === 'low' && "bg-blue-500/10"
+                    )}>
+                      <notification.icon className={cn(
+                        "h-4 w-4",
+                        notification.priority === 'high' && "text-red-500",
+                        notification.priority === 'medium' && "text-yellow-500",
+                        notification.priority === 'low' && "text-blue-500"
+                      )} />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white">{notification.title}</p>
+                      <p className="text-sm text-zinc-400">{notification.description}</p>
+                    </div>
+                  </div>
+                  {notification.type === 'action' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-white/5"
+                      onClick={() => toast.info('Taking action...')}
+                    >
+                      Take Action
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
     </div>
   )
 } 

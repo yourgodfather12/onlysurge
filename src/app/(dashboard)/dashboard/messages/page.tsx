@@ -1,371 +1,361 @@
 'use client'
 
-import * as React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   MessageSquare,
+  Users,
+  Bot,
+  Star,
+  Clock,
   Search,
   Filter,
-  Star,
-  MoreVertical,
-  Send,
-  Image as ImageIcon,
-  Smile,
-  Paperclip,
-  ChevronDown,
-  Settings
+  Settings,
+  ChevronRight,
+  ArrowUpRight,
+  Sparkles,
+  Zap,
+  RefreshCcw,
+  MoreHorizontal
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { EmptyState } from '@/components/ui/empty-state'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { PlatformBadge } from '@/components/ui/platform-badge'
 import { useDashboard } from '@/app/(dashboard)/layout'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { PlatformBadge } from '@/components/ui/platform-badge'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
-interface Message {
-  id: string
-  content: string
-  createdAt: string
-  status: 'unread' | 'read' | 'replied' | 'archived'
-  platform: {
-    id: 'onlyfans' | 'fansly'
-    type: 'onlyfans' | 'fansly'
-    name: string
-    icon: string | null
-    status: 'connected' | 'disconnected'
-    metrics: {
-      subscribers: number
-      views: number
-      revenue: number
-    }
-  }
-  sender: {
-    id: string
-    name: string
-    avatar: string
-    isSubscriber: boolean
-  }
-}
-
-// Mock data
-const mockMessages: Message[] = [
+// Sample data - replace with real data from your API
+const automatedResponses = [
   {
     id: '1',
-    content: 'Hey! Love your content! 💕',
-    createdAt: new Date().toISOString(),
-    status: 'unread',
-    platform: {
-      id: 'onlyfans',
-      type: 'onlyfans',
-      name: 'OnlyFans',
-      icon: null,
-      status: 'connected',
-      metrics: {
-        subscribers: 0,
-        views: 0,
-        revenue: 0
-      }
-    },
-    sender: {
-      id: '1',
-      name: 'Sarah Johnson',
-      avatar: 'https://i.pravatar.cc/150?u=1',
-      isSubscriber: true
+    name: 'Welcome Message',
+    status: 'active',
+    platforms: ['onlyfans', 'fansly'],
+    triggers: ['new subscriber'],
+    messagePreview: 'Hey! Thanks for subscribing! Here\'s what you can expect...',
+    stats: {
+      sent: 1250,
+      opened: 1100,
+      replied: 450
     }
   },
   {
     id: '2',
-    content: 'When will you post new content?',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    status: 'read',
-    platform: {
-      id: 'fansly',
-      type: 'fansly',
-      name: 'Fansly',
-      icon: null,
-      status: 'connected',
-      metrics: {
-        subscribers: 0,
-        views: 0,
-        revenue: 0
-      }
-    },
-    sender: {
-      id: '2',
-      name: 'Mike Smith',
-      avatar: 'https://i.pravatar.cc/150?u=2',
-      isSubscriber: true
+    name: 'Content Promotion',
+    status: 'active',
+    platforms: ['onlyfans'],
+    triggers: ['scheduled', 'new post'],
+    messagePreview: 'Don\'t miss out on my latest content! Check it out here...',
+    stats: {
+      sent: 850,
+      opened: 720,
+      replied: 280
     }
   },
   {
     id: '3',
-    content: 'Your latest post was amazing!',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    status: 'replied',
-    platform: {
-      id: 'onlyfans',
-      type: 'onlyfans',
-      name: 'OnlyFans',
-      icon: null,
-      status: 'connected',
-      metrics: {
-        subscribers: 0,
-        views: 0,
-        revenue: 0
-      }
-    },
-    sender: {
-      id: '3',
-      name: 'Emma Davis',
-      avatar: 'https://i.pravatar.cc/150?u=3',
-      isSubscriber: true
+    name: 'Re-engagement',
+    status: 'paused',
+    platforms: ['fansly'],
+    triggers: ['inactive subscriber'],
+    messagePreview: 'Hey! I noticed you\'ve been away. Here\'s what you\'ve missed...',
+    stats: {
+      sent: 320,
+      opened: 280,
+      replied: 95
     }
+  }
+]
+
+const recentMessages = [
+  {
+    id: '1',
+    user: {
+      name: 'Alex Thompson',
+      avatar: '/avatars/alex.jpg',
+      platform: 'onlyfans',
+      status: 'subscriber',
+      subscribed: '2 months'
+    },
+    preview: 'Love your content! Quick question about...',
+    timestamp: '2 min ago',
+    isAutomated: false,
+    unread: true
+  },
+  {
+    id: '2',
+    user: {
+      name: 'Sarah Miller',
+      avatar: '/avatars/sarah.jpg',
+      platform: 'fansly',
+      status: 'new',
+      subscribed: '1 day'
+    },
+    preview: '[Welcome Message] Hey! Thanks for subscribing...',
+    timestamp: '15 min ago',
+    isAutomated: true,
+    unread: false
+  }
+]
+
+const messageStats = [
+  {
+    title: 'Total Messages',
+    value: '2.4K',
+    change: '+12.5%',
+    trend: 'up',
+    icon: MessageSquare,
+    color: 'blue'
+  },
+  {
+    title: 'Response Rate',
+    value: '92.3%',
+    change: '+5.2%',
+    trend: 'up',
+    icon: Zap,
+    color: 'emerald'
+  },
+  {
+    title: 'Avg. Response Time',
+    value: '8m',
+    change: '-25%',
+    trend: 'up',
+    icon: Clock,
+    color: 'purple'
+  },
+  {
+    title: 'AI Responses',
+    value: '68%',
+    change: '+15.3%',
+    trend: 'up',
+    icon: Sparkles,
+    color: 'pink'
   }
 ]
 
 export default function MessagesPage() {
   const { setPageProps } = useDashboard()
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null)
-  const [messageText, setMessageText] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState<Message['status'] | 'all'>('all')
-  const [messages, setMessages] = useState<Message[]>(mockMessages)
-  const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null)
 
-  const filteredMessages = React.useMemo(() => {
-    if (selectedStatus === 'all') return messages
-    return messages.filter(message => message.status === selectedStatus)
-  }, [messages, selectedStatus])
-
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedMessage) return
-
-    // In a real app, this would send the message to an API
-    const newMessage: Message = {
-      id: Math.random().toString(),
-      content: messageText,
-      createdAt: new Date().toISOString(),
-      status: 'replied',
-      platform: selectedMessage.platform,
-      sender: {
-        id: 'me',
-        name: 'You',
-        avatar: 'https://i.pravatar.cc/150?u=me',
-        isSubscriber: false
-      }
-    }
-
-    setMessages(prev => [...prev, newMessage])
-    setMessageText('')
-  }
-
-  React.useEffect(() => {
+  useEffect(() => {
     setPageProps({
       title: "Messages",
-      description: "Manage your fan conversations across all platforms",
-      showPlatformFilter: true,
+      description: "Manage conversations and automated responses",
+      showPlatformFilter: false,
       actions: (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="rounded-full"
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full gap-2 text-zinc-400 hover:text-white hover:bg-white/5"
+              onClick={() => toast.info('Opening message settings...')}
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full gap-2 text-zinc-400 hover:text-white hover:bg-white/5"
+              onClick={() => toast.info('Refreshing messages...')}
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </div>
       )
     })
   }, [setPageProps])
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-12rem)]">
-        {/* Messages List */}
-        <div className="col-span-4 flex flex-col border border-zinc-800 rounded-xl overflow-hidden">
-          {/* Status Filter */}
-          <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value as Message['status'] | 'all')}
-              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-full text-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500/20"
-            >
-              <option value="all">All Messages</option>
-              <option value="unread">Unread</option>
-              <option value="read">Read</option>
-              <option value="replied">Replied</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          {/* Messages List */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500" />
+    <div className="space-y-8">
+      {/* Message Stats */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {messageStats.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <Card className="relative overflow-hidden p-6 bg-background/50 border-border/50 backdrop-blur-sm hover:bg-background/60 transition-all duration-200 group">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FF1B6B]/10 via-transparent to-[#45CAFF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <h3 className="text-2xl font-semibold text-foreground mt-2 tracking-tight">{stat.value}</h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "rounded-full font-medium transition-colors duration-200",
+                        stat.trend === 'up' 
+                          ? 'bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20' 
+                          : 'bg-red-500/10 text-red-500 group-hover:bg-red-500/20'
+                      )}
+                    >
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                      {stat.change}
+                    </Badge>
+                  </div>
+                </div>
+                <div className={cn(
+                  "p-3 rounded-xl ring-1 ring-inset ring-white/10 transition-all duration-200",
+                  stat.color === 'emerald' && "bg-emerald-500/10 group-hover:bg-emerald-500/20",
+                  stat.color === 'blue' && "bg-blue-500/10 group-hover:bg-blue-500/20",
+                  stat.color === 'pink' && "bg-pink-500/10 group-hover:bg-pink-500/20",
+                  stat.color === 'purple' && "bg-purple-500/10 group-hover:bg-purple-500/20"
+                )}>
+                  <stat.icon className={cn(
+                    "h-5 w-5 transition-transform duration-200 group-hover:scale-110",
+                    stat.color === 'emerald' && "text-emerald-500",
+                    stat.color === 'blue' && "text-blue-500",
+                    stat.color === 'pink' && "text-pink-500",
+                    stat.color === 'purple' && "text-purple-500"
+                  )} />
+                </div>
               </div>
-            ) : filteredMessages.length === 0 ? (
-              <EmptyState
-                icon={MessageSquare}
-                title="No messages"
-                description="You don't have any messages yet"
-              />
-            ) : (
-              <div className="divide-y divide-zinc-800">
-                {filteredMessages.map((message) => (
-                  <motion.button
-                    key={message.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      "w-full p-4 text-left hover:bg-zinc-800/50 transition-colors",
-                      selectedMessage?.id === message.id && "bg-zinc-800/50"
-                    )}
-                    onClick={() => setSelectedMessage(message)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <img
-                        src={message.sender.avatar}
-                        alt={message.sender.name}
-                        className="h-10 w-10 rounded-full"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">
-                              {message.sender.name}
-                            </span>
-                            <PlatformBadge
-                              platform={message.platform}
-                              size="sm"
-                            />
-                          </div>
-                          <StatusBadge
-                            status={message.status}
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search messages..."
+            className="pl-9 bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full gap-2 text-muted-foreground hover:text-foreground hover:bg-white/5"
+            onClick={() => toast.info('Opening filters...')}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="rounded-full gap-2 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg"
+            onClick={() => toast.info('Creating new automated response...')}
+          >
+            <Bot className="h-4 w-4" />
+            New AI Response
+          </Button>
+        </div>
+      </div>
+
+      {/* Automated Responses */}
+      <div className="grid gap-6">
+        {automatedResponses.map((response) => (
+          <Card
+            key={response.id}
+            className="relative overflow-hidden p-6 bg-background/50 border-border/50 backdrop-blur-sm hover:bg-background/60 transition-all duration-200 group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FF1B6B]/10 via-transparent to-[#45CAFF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-pink-500/10">
+                    <Bot className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{response.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "rounded-full",
+                          response.status === 'active' 
+                            ? "bg-emerald-500/10 text-emerald-500" 
+                            : "bg-yellow-500/10 text-yellow-500"
+                        )}
+                      >
+                        {response.status}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        {response.platforms.map((platform) => (
+                          <PlatformBadge
+                            key={platform}
+                            platform={{ type: platform, name: platform }}
                             size="sm"
-                            showDot={false}
                           />
-                        </div>
-                        <p className="text-sm text-zinc-400 truncate">
-                          {message.content}
-                        </p>
-                        <span className="text-xs text-zinc-500">
-                          {new Date(message.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Conversation View */}
-        <div className="col-span-8 flex flex-col border border-zinc-800 rounded-xl overflow-hidden">
-          {selectedMessage ? (
-            <>
-              {/* Conversation Header */}
-              <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={selectedMessage.sender.avatar}
-                      alt={selectedMessage.sender.name}
-                      className="h-10 w-10 rounded-full"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {selectedMessage.sender.name}
-                        </span>
-                        <PlatformBadge
-                          platform={selectedMessage.platform}
-                          size="sm"
-                        />
-                      </div>
-                      <span className="text-sm text-zinc-400">
-                        {selectedMessage.sender.isSubscriber ? 'Subscriber' : 'Non-subscriber'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <Star className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Message Content */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-4">
-                  {/* Sender's message */}
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={selectedMessage.sender.avatar}
-                      alt={selectedMessage.sender.name}
-                      className="h-8 w-8 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <div className="inline-block rounded-2xl bg-zinc-800 px-4 py-2">
-                        <p className="text-sm">
-                          {selectedMessage.content}
-                        </p>
-                      </div>
-                      <div className="mt-1">
-                        <span className="text-xs text-zinc-500">
-                          {new Date(selectedMessage.createdAt).toLocaleTimeString()}
-                        </span>
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full hover:bg-white/5"
+                  onClick={() => toast.info('Opening menu...')}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
               </div>
 
-              {/* Message Input */}
-              <div className="p-4 border-t border-zinc-800 bg-zinc-900/50">
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <div className="flex-1">
-                    <Input
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      placeholder="Type a message..."
-                      className="bg-zinc-800 border-zinc-700"
-                    />
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">{response.messagePreview}</p>
+              </div>
+
+              <div className="mt-4 flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-muted-foreground">Triggers:</span>
+                  <div className="flex items-center gap-1">
+                    {response.triggers.map((trigger) => (
+                      <Badge
+                        key={trigger}
+                        variant="secondary"
+                        className="rounded-full bg-muted/50 text-muted-foreground"
+                      >
+                        {trigger}
+                      </Badge>
+                    ))}
                   </div>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Smile className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!messageText.trim()}
-                    className="rounded-full"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </Button>
                 </div>
               </div>
-            </>
-          ) : (
-            <EmptyState
-              icon={MessageSquare}
-              title="Select a conversation"
-              description="Choose a conversation from the list to start messaging"
-              className="h-full"
-            />
-          )}
-        </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                <div className="text-center p-2 rounded-lg bg-muted/30">
+                  <div className="text-xs text-muted-foreground">Sent</div>
+                  <div className="text-sm font-medium text-foreground mt-1">
+                    {response.stats.sent.toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-muted/30">
+                  <div className="text-xs text-muted-foreground">Opened</div>
+                  <div className="text-sm font-medium text-foreground mt-1">
+                    {response.stats.opened.toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-muted/30">
+                  <div className="text-xs text-muted-foreground">Replied</div>
+                  <div className="text-sm font-medium text-foreground mt-1">
+                    {response.stats.replied.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   )

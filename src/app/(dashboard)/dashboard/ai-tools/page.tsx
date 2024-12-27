@@ -1,325 +1,447 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Sparkles,
+  Calendar,
   MessageSquare,
   Image as ImageIcon,
-  Video,
-  FileText,
-  Wand2,
-  Bot,
-  Zap,
-  Plus,
-  ArrowRight,
+  RefreshCw,
+  PlayCircle,
+  PauseCircle,
   Settings,
-  Rocket,
-  Brain,
-  Lightbulb,
-  Palette,
-  Code,
-  Pencil
+  Wand2,
+  CheckCircle2,
+  Bot,
+  Sparkles,
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useDashboard } from '@/app/(dashboard)/layout'
+import { PlatformBadge } from '@/components/ui/platform-badge'
 import { Badge } from '@/components/ui/badge'
+import { toast } from '@/components/ui/toast'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { cn } from '@/lib/utils'
+import { typography } from '@/styles/typography'
 
-type AIToolStatus = 'available' | 'beta' | 'coming-soon'
+// Helper function to format dates consistently
+function formatDate(date: string | Date) {
+  if (typeof date === 'string' && (date === 'Paused' || date === 'Error')) {
+    return date;
+  }
+  
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    // Use UTC to ensure consistent rendering between server and client
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZone: 'UTC'
+    }).format(d);
+  } catch (error) {
+    return 'Invalid Date';
+  }
+}
 
-interface AITool {
+type AutomationStatus = 'active' | 'inactive' | 'error'
+type ToolType = 'automation' | 'promotion'
+
+interface Tool {
   id: string
   title: string
   description: string
-  status: AIToolStatus
-  type: 'content' | 'chat' | 'image' | 'video' | 'text' | 'code'
-  icon: React.ElementType
-  usageCount: number
-  lastUsed?: string
+  status: AutomationStatus
+  type: 'schedule' | 'response' | 'sync' | 'optimization' | 'promotion' | 'targeting' | 'analytics'
+  category: ToolType
+  configuredOn?: {
+    page: string
+    path: string
+  }
+  platform?: {
+    id: 'onlyfans' | 'fansly'
+    type: 'onlyfans' | 'fansly'
+    name: string
+    icon: string | null
+    status: 'connected' | 'disconnected'
+    metrics: {
+      subscribers: number
+      views: number
+      revenue: number
+    }
+  }
+  lastRun?: string
+  nextRun?: string
+  stats?: {
+    reach?: number
+    engagement?: number
+    conversion?: number
+  }
 }
 
-const aiTools: AITool[] = [
+const tools: Tool[] = [
   {
     id: '1',
-    title: 'Content Assistant',
-    description: 'Generate engaging captions and descriptions for your content',
-    status: 'available',
-    type: 'content',
-    icon: Sparkles,
-    usageCount: 128,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 30).toISOString()
+    title: 'Auto-Post Content',
+    description: 'Schedule and post content automatically at optimal times',
+    status: 'active',
+    type: 'schedule',
+    category: 'automation',
+    configuredOn: {
+      page: 'Content Vault',
+      path: '/dashboard/content-vault'
+    }
   },
   {
     id: '2',
-    title: 'Chat Copilot',
-    description: 'AI-powered chat assistant for subscriber engagement',
-    status: 'beta',
-    type: 'chat',
-    icon: MessageSquare,
-    usageCount: 56,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+    title: 'Smart Replies',
+    description: 'AI-powered automated responses to common messages',
+    status: 'active',
+    type: 'response',
+    category: 'automation',
+    configuredOn: {
+      page: 'Messages',
+      path: '/dashboard/messages'
+    }
   },
   {
     id: '3',
-    title: 'Image Enhancer',
-    description: 'Enhance and optimize your images with AI',
-    status: 'available',
-    type: 'image',
-    icon: ImageIcon,
-    usageCount: 89,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 120).toISOString()
+    title: 'Content Generator',
+    description: 'Generate engaging captions and descriptions',
+    status: 'active',
+    type: 'optimization',
+    category: 'automation'
   },
   {
     id: '4',
-    title: 'Video Editor',
-    description: 'AI-powered video editing and enhancement',
-    status: 'coming-soon',
-    type: 'video',
-    icon: Video,
-    usageCount: 0
+    title: 'Cross-Platform Sync',
+    description: 'Sync content across OnlyFans and Fansly',
+    status: 'active',
+    type: 'sync',
+    category: 'automation'
   },
   {
     id: '5',
-    title: 'Caption Generator',
-    description: 'Generate engaging captions for your posts',
-    status: 'available',
-    type: 'text',
-    icon: FileText,
-    usageCount: 245,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 15).toISOString()
+    title: 'Media Enhancer',
+    description: 'Enhance images and videos with AI',
+    status: 'active',
+    type: 'optimization',
+    category: 'automation',
+    configuredOn: {
+      page: 'Content Vault',
+      path: '/dashboard/content-vault'
+    }
   },
   {
     id: '6',
-    title: 'Style Transfer',
-    description: 'Apply artistic styles to your images',
-    status: 'beta',
-    type: 'image',
-    icon: Wand2,
-    usageCount: 34,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 180).toISOString()
-  },
-  {
-    id: '7',
-    title: 'Chatbot Builder',
-    description: 'Create custom chatbots for subscriber interaction',
-    status: 'coming-soon',
-    type: 'chat',
-    icon: Bot,
-    usageCount: 0
-  },
-  {
-    id: '8',
-    title: 'Content Scheduler',
-    description: 'AI-powered content scheduling optimization',
-    status: 'available',
-    type: 'content',
-    icon: Zap,
-    usageCount: 167,
-    lastUsed: new Date(Date.now() - 1000 * 60 * 45).toISOString()
+    title: 'Profile Optimizer',
+    description: 'Optimize your profile with AI suggestions',
+    status: 'active',
+    type: 'optimization',
+    category: 'automation',
+    configuredOn: {
+      page: 'Profile Builder',
+      path: '/dashboard/profile-builder'
+    }
   }
 ]
 
-const getStatusConfig = (status: AIToolStatus) => {
-  switch (status) {
-    case 'available':
-      return {
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-500',
-        label: 'Available'
-      }
-    case 'beta':
-      return {
-        bg: 'bg-blue-500/10',
-        text: 'text-blue-500',
-        label: 'Beta'
-      }
-    case 'coming-soon':
-      return {
-        bg: 'bg-purple-500/10',
-        text: 'text-purple-500',
-        label: 'Coming Soon'
-      }
-  }
-}
-
-const getTypeConfig = (type: AITool['type']) => {
+const getToolIcon = (type: Tool['type']) => {
   switch (type) {
-    case 'content':
-      return {
-        bg: 'bg-pink-500/10',
-        text: 'text-pink-500',
-        icon: Rocket
-      }
-    case 'chat':
-      return {
-        bg: 'bg-blue-500/10',
-        text: 'text-blue-500',
-        icon: Brain
-      }
-    case 'image':
-      return {
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-500',
-        icon: Palette
-      }
-    case 'video':
-      return {
-        bg: 'bg-purple-500/10',
-        text: 'text-purple-500',
-        icon: Video
-      }
-    case 'text':
-      return {
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-500',
-        icon: Pencil
-      }
-    case 'code':
-      return {
-        bg: 'bg-cyan-500/10',
-        text: 'text-cyan-500',
-        icon: Code
-      }
+    case 'schedule':
+      return Calendar
+    case 'response':
+      return MessageSquare
+    case 'sync':
+      return RefreshCw
+    case 'optimization':
+      return ImageIcon
+    default:
+      return Sparkles
   }
 }
 
 export default function AIToolsPage() {
   const { setPageProps } = useDashboard()
+  const [showSetupWizard, setShowSetupWizard] = useState(false)
+  const [setupProgress, setSetupProgress] = useState(0)
 
   useEffect(() => {
     setPageProps({
       title: "AI Tools",
-      description: "Enhance your content with AI-powered tools",
+      description: "Automate your content with AI",
       showPlatformFilter: false,
       actions: (
         <Button
           size="sm"
-          className="rounded-full"
+          className="rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg"
+          onClick={() => setShowSetupWizard(true)}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          New Tool
+          <Wand2 className="h-4 w-4 mr-2" />
+          Quick Setup
         </Button>
       )
     })
   }, [setPageProps])
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Quick Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-emerald-500/10">
-              <Zap className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <h3 className="font-medium">Available Tools</h3>
-              <p className="text-2xl font-semibold mt-1">
-                {aiTools.filter(t => t.status === 'available').length}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-500/10">
-              <Sparkles className="h-6 w-6 text-blue-500" />
-            </div>
-            <div>
-              <h3 className="font-medium">Total Uses</h3>
-              <p className="text-2xl font-semibold mt-1">
-                {aiTools.reduce((acc, tool) => acc + tool.usageCount, 0)}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-500/10">
-              <Lightbulb className="h-6 w-6 text-purple-500" />
-            </div>
-            <div>
-              <h3 className="font-medium">Coming Soon</h3>
-              <p className="text-2xl font-semibold mt-1">
-                {aiTools.filter(t => t.status === 'coming-soon').length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+  const handleToggleTool = (tool: Tool) => {
+    if (tool.status === 'error') {
+      toast.error('Cannot toggle tool in error state')
+      return
+    }
+    toast.success(`${tool.title} ${tool.status === 'active' ? 'paused' : 'activated'}`)
+  }
 
-      {/* AI Tools Grid */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold">AI Tools</h3>
-          <Button variant="ghost" size="sm" className="rounded-full">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {aiTools.map((tool) => {
-            const statusConfig = getStatusConfig(tool.status)
-            const typeConfig = getTypeConfig(tool.type)
-            const TypeIcon = typeConfig.icon
-            return (
-              <motion.div
-                key={tool.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card className="p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-lg ${typeConfig.bg}`}>
-                      <TypeIcon className={`h-5 w-5 ${typeConfig.text}`} />
+  const handleToolSettings = (tool: Tool) => {
+    toast.info(`Opening settings for ${tool.title}`)
+  }
+
+  const handleSetupComplete = () => {
+    setShowSetupWizard(false)
+    toast.success('All AI tools are now configured!')
+    setSetupProgress(100)
+  }
+
+  return (
+    <div className="space-y-8 px-4 py-8 md:px-8">
+      {/* Quick Setup Card */}
+      <Card className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-blue-500/10 animate-gradient" />
+        <div className="relative p-8 md:p-12">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20">
+                <Sparkles className="h-4 w-4 text-pink-500" />
+                <span className={cn(typography.caption, "text-pink-500")}>AI-Powered Automation</span>
+              </div>
+              <div className="space-y-2">
+                <h2 className={cn(typography.h1, "text-white leading-tight")}>Get Started with AI</h2>
+                <p className={cn(typography.subtitle1, "text-zinc-400 max-w-lg")}>
+                  Automate your content creation and management with our powerful AI tools. Set up once and let AI handle the rest.
+                </p>
+              </div>
+              <div className="flex items-center gap-4 pt-2">
+                <Button
+                  size="lg"
+                  className="rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg"
+                  onClick={() => setShowSetupWizard(true)}
+                >
+                  <Wand2 className="h-5 w-5 mr-2" />
+                  <span className={typography.buttonText}>Configure All Tools</span>
+                </Button>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/50">
+                  <Bot className="h-5 w-5 text-emerald-500" />
+                  <span className={cn(typography.caption, "text-emerald-500")}>
+                    {tools.filter(t => !t.configuredOn).length} Tools Need Setup
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 blur-xl" />
+                <div className="relative grid grid-cols-2 gap-3">
+                  {['schedule', 'response', 'optimization', 'sync'].map((type) => (
+                    <div key={type} className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-sm">
+                      {React.createElement(getToolIcon(type as Tool['type']), {
+                        className: "h-6 w-6 text-pink-500"
+                      })}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{tool.title}</span>
-                          <Badge
-                            variant="secondary"
-                            className={`${statusConfig.bg} ${statusConfig.text}`}
-                          >
-                            {statusConfig.label}
-                          </Badge>
-                        </div>
-                      </div>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        {tool.description}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-xs text-zinc-500">
-                          {tool.usageCount} uses
-                        </span>
-                        {tool.lastUsed && (
-                          <>
-                            <span className="text-xs text-zinc-500">•</span>
-                            <span className="text-xs text-zinc-500">
-                              Last used: {new Date(tool.lastUsed).toLocaleString()}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full"
-                        disabled={tool.status === 'coming-soon'}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            )
-          })}
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
+
+      {/* Tools Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {tools.map(tool => (
+          <motion.div
+            key={tool.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className={cn(
+              "h-full bg-zinc-900/50 hover:bg-zinc-900 border-zinc-800/50 transition-all duration-300",
+              tool.configuredOn && "border-emerald-500/20"
+            )}>
+              <div className="p-6 flex flex-col h-full">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "p-3 rounded-xl ring-1 ring-inset",
+                      tool.configuredOn 
+                        ? "bg-emerald-500/10 ring-emerald-500/20" 
+                        : "bg-pink-500/10 ring-pink-500/20"
+                    )}>
+                      {React.createElement(getToolIcon(tool.type), {
+                        className: cn(
+                          "h-5 w-5",
+                          tool.configuredOn ? "text-emerald-500" : "text-pink-500"
+                        )
+                      })}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={cn(typography.h4, "text-white")}>{tool.title}</h3>
+                      <p className={cn(typography.body2, "text-zinc-400 mt-1")}>{tool.description}</p>
+                      {tool.configuredOn && (
+                        <div className="flex items-center gap-2 mt-3">
+                          <Badge className="bg-emerald-500/10 text-emerald-500 gap-1.5">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Configured
+                          </Badge>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-zinc-400 hover:text-white h-auto p-0"
+                            onClick={() => window.location.href = tool.configuredOn!.path}
+                          >
+                            <span className={typography.caption}>View on {tool.configuredOn.page}</span>
+                            <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-6">
+                  <div className="flex items-center justify-end gap-2">
+                    {!tool.configuredOn && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-full hover:bg-white/5 group"
+                          onClick={() => handleToggleTool(tool)}
+                        >
+                          {tool.status === 'active' ? (
+                            <PauseCircle className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                          ) : (
+                            <PlayCircle className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-full hover:bg-white/5 group"
+                          onClick={() => handleToolSettings(tool)}
+                        >
+                          <Settings className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Setup Wizard Dialog */}
+      <Dialog open={showSetupWizard} onOpenChange={setShowSetupWizard}>
+        <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-800/50">
+          <DialogHeader>
+            <DialogTitle className={cn(typography.h3, "text-white")}>Configure AI Tools</DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-6 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                <Bot className="h-5 w-5 text-pink-500" />
+                <p className={cn(typography.body2, "text-pink-100")}>
+                  We'll automatically configure all AI tools for optimal performance
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                  <Card className="p-4 bg-zinc-900/50 border-zinc-800/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <PlatformBadge
+                          platform={{
+                            type: 'onlyfans',
+                            name: 'OnlyFans',
+                            icon: null
+                          }}
+                          size="sm"
+                        />
+                        <span className={cn(typography.subtitle1, "text-white")}>OnlyFans</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full hover:bg-white/5"
+                        onClick={() => toast.info('Connecting OnlyFans...')}
+                      >
+                        <span className={typography.buttonText}>Connect</span>
+                      </Button>
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-zinc-900/50 border-zinc-800/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <PlatformBadge
+                          platform={{
+                            type: 'fansly',
+                            name: 'Fansly',
+                            icon: null
+                          }}
+                          size="sm"
+                        />
+                        <span className={cn(typography.subtitle1, "text-white")}>Fansly</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full hover:bg-white/5"
+                        onClick={() => toast.info('Connecting Fansly...')}
+                      >
+                        <span className={typography.buttonText}>Connect</span>
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg"
+                onClick={handleSetupComplete}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                <span className={typography.buttonText}>Configure All Tools</span>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 hover:from-pink-500/20 hover:to-violet-500/20 text-white"
+        onClick={() => toast.info('Opening AI settings...')}
+      >
+        <span className={typography.buttonText}>AI Settings</span>
+        <ChevronRight className="h-4 w-4 ml-1" />
+      </Button>
     </div>
   )
 } 

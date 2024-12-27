@@ -8,6 +8,13 @@ const config: Config = {
   ],
   darkMode: 'class',
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)'],
@@ -15,7 +22,14 @@ const config: Config = {
         'orbitron': ['var(--font-orbitron)'],
       },
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
           pink: '#FF1B6B',
           purple: '#9D4EDD',
           blue: '#45CAFF',
@@ -31,19 +45,49 @@ const config: Config = {
           900: '#0c4a6e',
           950: '#082f49',
         },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+          yellow: '#FFD700',
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
         neon: {
           pink: '#FF1B6B',
           purple: '#B026FF',
           blue: '#45CAFF',
-        },
-        accent: {
-          yellow: '#FFD700',
         },
         dark: {
           DEFAULT: '#0A0A0F',
           light: '#1A1A2F',
           lighter: '#2A2A4F',
         },
+        'dark': '#0A0A0F',
+        'dark-light': '#1A1A1F',
+        'primary-pink': '#FF1B6B',
+        'primary-purple': '#9D4EDD',
+        'primary-blue': '#45CAFF',
+        'neon-pink': '#FF1B6B',
+        'neon-purple': '#9D4EDD',
+        'neon-blue': '#45CAFF',
       },
       animation: {
         'gradient-x': 'gradient-x 15s ease infinite',
@@ -53,7 +97,7 @@ const config: Config = {
         'float': 'float 3s ease-in-out infinite',
         'glow': 'glow 1.5s ease-in-out infinite alternate',
         'particle-float': 'particle-float 10s ease-in-out infinite',
-        'fade-in': 'fade-in 0.5s ease-out',
+        'fade-in': 'fade-in 0.5s ease-out forwards',
         'fade-out': 'fade-out 0.5s ease-out',
         'slide-in': 'slide-in 0.5s ease-out',
         'slide-out': 'slide-out 0.5s ease-out',
@@ -146,6 +190,15 @@ const config: Config = {
         'neon-pink': '0 0 5px theme(colors.neon.pink), 0 0 20px theme(colors.neon.pink)',
         'neon-purple': '0 0 5px theme(colors.neon.purple), 0 0 20px theme(colors.neon.purple)',
         'neon-blue': '0 0 5px theme(colors.neon.blue), 0 0 20px theme(colors.neon.blue)',
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
   },

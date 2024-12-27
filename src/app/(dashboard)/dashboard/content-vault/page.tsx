@@ -1,451 +1,469 @@
 'use client'
 
-import * as React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import {
-  FileImage,
-  Search,
-  Filter,
-  RefreshCcw,
-  Plus,
-  ArrowUpRight,
-  Star,
-  Mail,
-  MoreVertical,
-  Bot,
-  Sparkles,
-  Target,
-  Send,
-  Archive,
-  Trash2,
-  Clock,
-  Heart,
-  Image,
-  Paperclip,
-  Smile,
-  Eye,
-  Save,
-  Link,
-  Settings,
-  Layout,
-  Palette,
-  Type,
-  Video,
-  Music,
-  DollarSign,
-  Users,
-  TrendingUp,
-  Calendar,
-  Gift,
-  Zap,
-  MessageSquare,
-  Copy,
-  ExternalLink,
-  Edit,
-  LineChart,
-  PieChart,
-  Activity,
-  Download,
-  Upload,
-  FolderPlus,
-  Grid,
-  List,
+  FileText, Image as ImageIcon, Video, Calendar, Upload,
+  Filter, Grid, List, Clock, Sparkles, Zap, Target,
+  TrendingUp, MoreHorizontal, ChevronRight, Bot,
+  Plus, Tags, DollarSign, Users, Star, Search,
+  MessageSquare, Bookmark, Heart, ArrowUpRight,
+  Trash2, Edit2, Share2, Lock, Eye, Settings2
 } from 'lucide-react'
+import { useDashboard } from '@/app/(dashboard)/layout'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PageContainer } from '@/components/layout/page-container'
-import { DashboardCard, DashboardCardHeader, DashboardCardContent } from '@/components/ui/dashboard-card'
-import { usePlatform } from '@/lib/platform-context'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { PlatformBadge } from '@/components/ui/platform-badge'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
+import { typography } from '@/styles/typography'
+import { motion, AnimatePresence } from 'framer-motion'
 
-// Types
-type ContentType = 'image' | 'video' | 'audio' | 'text'
-type ContentStatus = 'draft' | 'scheduled' | 'published' | 'archived'
-type Platform = 'onlyfans' | 'fansly' | 'all'
+// Content categories for filtering
+const contentCategories = [
+  { id: 'all', label: 'All Content', icon: Grid },
+  { id: 'scheduled', label: 'Scheduled', icon: Calendar },
+  { id: 'drafts', label: 'Drafts', icon: FileText },
+  { id: 'videos', label: 'Videos', icon: Video },
+  { id: 'photos', label: 'Photos', icon: ImageIcon },
+  { id: 'premium', label: 'Premium', icon: Star, badge: 'HOT' },
+  { id: 'archived', label: 'Archived', icon: Bookmark }
+]
 
-interface ContentItem {
-  id: string
-  title: string
-  type: ContentType
-  thumbnail: string
-  status: ContentStatus
-  platforms: Platform[]
-  metrics: {
-    views: string
-    likes: string
-    revenue: string
-    comments: string
-  }
-  createdAt: string
-  scheduledFor?: string
-  tags: string[]
-  description?: string
-  isExclusive: boolean
-  price?: string
-}
-
-// Utility functions
-const getTypeIcon = (type: string) => {
-  switch (type.toLowerCase()) {
-    case 'video':
-      return Video
-    case 'image':
-      return Image
-    default:
-      return FileImage
-  }
-}
-
-const getStatusClasses = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'published':
-      return {
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-500'
-      }
-    case 'scheduled':
-      return {
-        bg: 'bg-blue-500/10',
-        text: 'text-blue-500'
-      }
-    case 'draft':
-      return {
-        bg: 'bg-zinc-500/10',
-        text: 'text-zinc-500'
-      }
-    default:
-      return {
-        bg: 'bg-zinc-500/10',
-        text: 'text-zinc-500'
-      }
-  }
-}
-
-// Components
-const TypeIcon = ({ type, className }: { type: string; className?: string }) => {
-  const Icon = getTypeIcon(type)
-  return <Icon className={className} />
-}
-
-// Enhanced mock data
-const content: ContentItem[] = [
+// Sample content items
+const contentItems = [
   {
     id: '1',
-    title: 'Summer Collection',
-    type: 'image',
-    thumbnail: '/placeholder.jpg',
-    status: 'published',
+    type: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1536940385103-c729049165e6?w=800&auto=format&fit=crop&q=60',
+    title: 'Beach Photoshoot BTS',
+    description: 'Behind the scenes footage from our latest beach photoshoot.',
+    duration: '2:45',
+    size: '128MB',
+    uploadedAt: '2 hours ago',
+    status: 'scheduled',
+    visibility: 'premium',
     platforms: ['onlyfans', 'fansly'],
-    metrics: {
-      views: '1,234',
-      likes: '567',
-      revenue: '$234',
-      comments: '89'
+    scheduling: {
+      onlyfans: { date: '2024-01-20', time: '8:00 PM EST' },
+      fansly: { date: '2024-01-21', time: '8:00 PM EST' }
     },
-    createdAt: '2023-12-01',
-    tags: ['summer', 'collection', 'featured'],
-    isExclusive: true,
-    price: '$19.99'
+    stats: {
+      views: 1250,
+      likes: 420,
+      comments: 85,
+      revenue: 850
+    },
+    aiScore: 94,
+    tags: ['beach', 'bts', 'exclusive']
   },
   {
     id: '2',
-    title: 'Behind the Scenes',
-    type: 'video',
-    thumbnail: '/placeholder.jpg',
-    status: 'scheduled',
-    platforms: ['fansly'],
-    metrics: {
-      views: '856',
-      likes: '234',
-      revenue: '$123',
-      comments: '45'
+    type: 'image',
+    thumbnail: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&auto=format&fit=crop&q=60',
+    title: 'Lingerie Collection',
+    description: 'New lingerie collection photoshoot.',
+    size: '4.2MB',
+    uploadedAt: '1 day ago',
+    status: 'draft',
+    visibility: 'premium',
+    platforms: ['onlyfans'],
+    stats: {
+      views: 0,
+      likes: 0,
+      comments: 0,
+      revenue: 0
     },
-    createdAt: '2023-12-15',
-    scheduledFor: '2023-12-25',
-    tags: ['bts', 'exclusive'],
-    description: 'Exclusive behind the scenes content',
-    isExclusive: true,
-    price: '$29.99'
+    aiScore: 88,
+    tags: ['lingerie', 'photoset', 'exclusive']
   },
   {
     id: '3',
-    title: 'Exclusive Photos',
-    type: 'image',
-    thumbnail: '/placeholder.jpg',
-    status: 'draft',
-    platforms: ['onlyfans'],
-    metrics: {
-      views: '0',
-      likes: '0',
-      revenue: '$0',
-      comments: '0'
+    type: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1604514628550-37477afdf4e3?w=800&auto=format&fit=crop&q=60',
+    title: 'Workout Routine',
+    description: 'My daily workout routine and tips.',
+    duration: '15:30',
+    size: '450MB',
+    uploadedAt: '2 days ago',
+    status: 'published',
+    visibility: 'public',
+    platforms: ['onlyfans', 'fansly'],
+    stats: {
+      views: 3200,
+      likes: 890,
+      comments: 145,
+      revenue: 1200
     },
-    createdAt: '2023-12-20',
-    tags: ['photos', 'draft'],
-    isExclusive: false
-  },
-]
-
-// Enhanced quick actions
-const quickActions = [
-  {
-    title: 'Upload Content',
-    description: 'Add new photos or videos',
-    icon: Upload,
-    colorClass: 'text-emerald-500',
-    bgColorClass: 'bg-emerald-500/10 p-2 rounded-lg',
-    onClick: () => console.log('Upload'),
-  },
-  {
-    title: 'AI Enhancement',
-    description: 'Enhance content with AI',
-    icon: Sparkles,
-    colorClass: 'text-purple-500',
-    bgColorClass: 'bg-purple-500/10 p-2 rounded-lg',
-    onClick: () => console.log('AI Enhance'),
-  },
-  {
-    title: 'Create Collection',
-    description: 'Organize content into albums',
-    icon: FolderPlus,
-    colorClass: 'text-blue-500',
-    bgColorClass: 'bg-blue-500/10 p-2 rounded-lg',
-    onClick: () => console.log('Create Collection'),
-  },
-  {
-    title: 'Batch Upload',
-    description: 'Upload multiple files at once',
-    icon: Upload,
-    colorClass: 'text-pink-500',
-    bgColorClass: 'bg-pink-500/10 p-2 rounded-lg',
-    onClick: () => console.log('Batch Upload'),
-  },
-  {
-    title: 'Schedule Posts',
-    description: 'Plan your content calendar',
-    icon: Calendar,
-    colorClass: 'text-yellow-500',
-    bgColorClass: 'bg-yellow-500/10 p-2 rounded-lg',
-    onClick: () => console.log('Schedule'),
+    aiScore: 82,
+    tags: ['workout', 'fitness', 'tutorial']
   }
 ]
 
-// Enhanced insights with more detailed metrics
-const insights = [
-  {
-    title: 'Top Performer',
-    description: 'Summer Collection: 1.2K views',
-    icon: TrendingUp,
-    colorClass: 'text-emerald-500',
-    bgColorClass: 'bg-emerald-500/10 p-2 rounded-lg',
-    trend: 'up',
-    details: '+25% from last week'
-  },
-  {
-    title: 'Revenue Generated',
-    description: '$357 from content sales',
-    icon: DollarSign,
-    colorClass: 'text-pink-500',
-    bgColorClass: 'bg-pink-500/10 p-2 rounded-lg',
-    trend: 'up',
-    details: '+15% increase'
-  },
-  {
-    title: 'Popular Type',
-    description: 'Videos get 2x more engagement',
-    icon: Video,
-    colorClass: 'text-blue-500',
-    bgColorClass: 'bg-blue-500/10 p-2 rounded-lg',
-    trend: 'neutral',
-    details: 'Based on last 30 days'
-  },
-  {
-    title: 'Platform Performance',
-    description: 'OnlyFans leads in revenue',
-    icon: LineChart,
-    colorClass: 'text-purple-500',
-    bgColorClass: 'bg-purple-500/10 p-2 rounded-lg',
-    trend: 'up',
-    details: '65% of total revenue'
-  }
-]
-
-// Main Component
 export default function ContentVaultPage() {
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('all')
-  const [selectedType, setSelectedType] = useState<ContentType | 'all'>('all')
-  const [selectedStatus, setSelectedStatus] = useState<ContentStatus | 'all'>('all')
+  const { setPageProps } = useDashboard()
   const [searchQuery, setSearchQuery] = useState('')
-  const { platforms, currentPlatform, setCurrentPlatform } = usePlatform()
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [selectedContent, setSelectedContent] = useState<string | null>(null)
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsRefreshing(false)
-  }
+  useEffect(() => {
+    setPageProps({
+      title: 'Content Vault',
+      description: 'Manage and schedule your content',
+      showPlatformFilter: false,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full hover:bg-white/5"
+            onClick={() => toast.info('Opening settings...')}
+          >
+            <Settings2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg"
+            onClick={() => toast.info('Opening upload...')}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload New
+          </Button>
+        </div>
+      )
+    })
+  }, [setPageProps])
 
-  // Filter content based on selected filters and search query
-  const filteredContent = content.filter(item => {
-    const matchesPlatform = selectedPlatform === 'all' || item.platforms.includes(selectedPlatform)
-    const matchesType = selectedType === 'all' || item.type === selectedType
-    const matchesStatus = selectedStatus === 'all' || item.status === selectedStatus
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Filter content based on selected category and search query
+  const filteredContent = contentItems.filter(item => {
+    const matchesCategory = selectedCategory === 'all' || 
+      (selectedCategory === 'scheduled' && item.status === 'scheduled') ||
+      (selectedCategory === 'drafts' && item.status === 'draft') ||
+      (selectedCategory === 'videos' && item.type === 'video') ||
+      (selectedCategory === 'photos' && item.type === 'image') ||
+      (selectedCategory === 'premium' && item.visibility === 'premium')
     
-    return matchesPlatform && matchesType && matchesStatus && matchesSearch
+    const matchesSearch = searchQuery === '' || 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    
+    return matchesCategory && matchesSearch
   })
 
+  const handleContentClick = (id: string) => {
+    setSelectedContent(id === selectedContent ? null : id)
+  }
+
   return (
-    <PageContainer>
-      <div className="flex flex-col gap-6">
-        {/* Header - Simplified like iOS */}
-        <div className="flex items-center justify-between sticky top-0 z-10 bg-black/50 backdrop-blur-lg px-4 py-3 -mx-4 -mt-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Content Vault</h1>
-            <p className="text-sm text-zinc-400">
-              {filteredContent.length} items • {
-                selectedPlatform === 'all' ? 'All Platforms' : 
-                selectedPlatform === 'onlyfans' ? 'OnlyFans' : 'Fansly'
-              }
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <input
-                type="text"
-                placeholder="Search content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500/20"
-              />
-            </div>
-            <Button variant="ghost" size="sm" className="rounded-full">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
-            <Button variant="default" size="sm" className="rounded-full">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-          </div>
+    <div className="space-y-8">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search content..."
+            className="pl-9 bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-
-        {/* Filter Bar - iOS Style */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-          <select
-            value={selectedPlatform}
-            onChange={(e) => setSelectedPlatform(e.target.value as Platform)}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-full text-sm px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500/20"
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-full bg-background/50 p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "rounded-full",
+                viewMode === 'grid' && "bg-white/10"
+              )}
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "rounded-full",
+                viewMode === 'list' && "bg-white/10"
+              )}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full gap-2 text-muted-foreground hover:text-foreground hover:bg-white/5"
+            onClick={() => toast.info('Opening filters...')}
           >
-            <option value="all">All Platforms</option>
-            <option value="onlyfans">OnlyFans</option>
-            <option value="fansly">Fansly</option>
-          </select>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as ContentType | 'all')}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-full text-sm px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500/20"
-          >
-            <option value="all">All Types</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="audio">Audio</option>
-            <option value="text">Text</option>
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as ContentStatus | 'all')}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-full text-sm px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500/20"
-          >
-            <option value="all">All Status</option>
-            <option value="draft">Drafts</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
         </div>
+      </div>
 
-        {/* Content Grid - Photo Album Style */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 -mx-4">
-          {filteredContent.map((item) => (
-            <div key={item.id} className="group relative aspect-square overflow-hidden bg-zinc-900">
+      {/* Categories */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {contentCategories.map((category) => {
+          const count = category.id === 'all' 
+            ? contentItems.length 
+            : contentItems.filter(item => 
+                category.id === 'scheduled' ? item.status === 'scheduled' :
+                category.id === 'drafts' ? item.status === 'draft' :
+                category.id === 'videos' ? item.type === 'video' :
+                category.id === 'photos' ? item.type === 'image' :
+                category.id === 'premium' ? item.visibility === 'premium' :
+                false
+              ).length
+          
+          return (
+            <Button
+              key={category.id}
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "rounded-full whitespace-nowrap gap-2 transition-all duration-200",
+                selectedCategory === category.id 
+                  ? "bg-white/10 text-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              )}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              <category.icon className="h-4 w-4" />
+              {category.label}
+              <Badge className={cn(
+                "ml-1",
+                category.badge ? "bg-[#FF1B6B]" : "bg-muted/80"
+              )}>
+                {category.badge || count}
+              </Badge>
+            </Button>
+          )
+        })}
+      </div>
+
+      {/* Content Grid/List */}
+      <div className={cn(
+        "grid gap-4",
+        viewMode === 'grid' ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
+      )}>
+        {filteredContent.map((item) => (
+          <motion.div
+            key={item.id}
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card
+              className={cn(
+                "group relative overflow-hidden bg-background/50 border-border/50 hover:bg-background/60 transition-all duration-200",
+                selectedContent === item.id && "ring-2 ring-pink-500"
+              )}
+              onClick={() => handleContentClick(item.id)}
+            >
               {/* Thumbnail */}
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
-                <TypeIcon type={item.type} className="h-8 w-8 text-zinc-400" />
-              </div>
-              
-              {/* Platform Indicators */}
-              <div className="absolute top-2 right-2 flex items-center gap-1">
-                {item.platforms.map(platform => (
-                  <span 
-                    key={platform}
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: platform === 'onlyfans' ? '#00AFF0' : '#FFA500'
-                    }}
+              <div className="relative aspect-video">
+                <div className="absolute inset-0">
+                  <Image
+                    src={item.thumbnail}
+                    alt={item.title}
+                    className="object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={true}
                   />
-                ))}
-              </div>
-
-              {/* Status Badge */}
-              {item.status !== 'published' && (
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
+                
+                {/* Status Badge */}
                 <div className="absolute top-2 left-2">
-                  <span className={cn(
-                    'px-2 py-1 text-xs font-medium rounded-full',
-                    getStatusClasses(item.status).bg,
-                    getStatusClasses(item.status).text
+                  <Badge className={cn(
+                    "rounded-full",
+                    item.status === 'scheduled' && "bg-blue-500/10 text-blue-500",
+                    item.status === 'draft' && "bg-yellow-500/10 text-yellow-500",
+                    item.status === 'published' && "bg-emerald-500/10 text-emerald-500"
                   )}>
-                    {item.status}
-                  </span>
+                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                  </Badge>
                 </div>
-              )}
 
-              {/* Exclusive Badge */}
-              {item.isExclusive && (
-                <div className="absolute bottom-2 left-2">
-                  <span className="px-2 py-1 text-xs font-medium bg-pink-500/20 text-pink-500 rounded-full">
-                    Exclusive
-                  </span>
+                {/* Type & Duration/Size */}
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-black/50">
+                    {item.type === 'video' ? (
+                      <div className="flex items-center gap-1">
+                        <Video className="h-3 w-3" />
+                        {item.duration}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <ImageIcon className="h-3 w-3" />
+                        Photo
+                      </div>
+                    )}
+                  </Badge>
                 </div>
-              )}
 
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="absolute inset-0 flex flex-col justify-between p-3">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full bg-black/50">
-                      <Edit className="h-4 w-4" />
+                {/* Quick Actions Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-white/20"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toast.info('Opening editor...')
+                      }}
+                    >
+                      <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full bg-black/50">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-white/20"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toast.info('Opening scheduler...')
+                      }}
+                    >
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-white/20"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toast.info('Opening share options...')
+                      }}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-white/20"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toast.info('Deleting content...')
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-white text-sm">{item.title}</h3>
-                    <div className="flex items-center gap-3 text-xs text-zinc-300 mt-1">
-                      <span>{item.metrics.views} views</span>
-                      <span>{item.metrics.likes} likes</span>
-                      <span className="text-emerald-400">{item.metrics.revenue}</span>
+                </div>
+              </div>
+
+              {/* Content Info */}
+              <div className="p-4">
+                <div className="space-y-1">
+                  <div className="flex items-start justify-between">
+                    <h3 className={typography.h4}>{item.title}</h3>
+                    {item.visibility === 'premium' && (
+                      <Badge className="bg-[#FF1B6B]/10 text-[#FF1B6B] gap-1">
+                        <Star className="h-3 w-3" />
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
+                  <p className={cn(typography.body2, "line-clamp-2 text-muted-foreground")}>{item.description}</p>
+                </div>
+
+                {/* Platforms */}
+                <div className="mt-4 flex items-center gap-2">
+                  {item.platforms.map((platform) => (
+                    <PlatformBadge
+                      key={platform}
+                      platform={{ type: platform, name: platform }}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+
+                {/* Stats */}
+                {item.status === 'published' && item.stats && (
+                  <div className="mt-4 grid grid-cols-4 gap-2 p-2 rounded-lg bg-muted/30">
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Views</div>
+                      <div className="text-sm font-medium text-foreground">{item.stats.views.toLocaleString()}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Likes</div>
+                      <div className="text-sm font-medium text-foreground">{item.stats.likes.toLocaleString()}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Comments</div>
+                      <div className="text-sm font-medium text-foreground">{item.stats.comments.toLocaleString()}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Revenue</div>
+                      <div className="text-sm font-medium text-foreground">${item.stats.revenue.toLocaleString()}</div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                )}
 
-        {/* Quick Actions and Insights - Minimized to a bottom sheet or modal */}
-        <Button 
-          variant="outline" 
-          className="fixed bottom-6 right-6 rounded-full shadow-lg bg-zinc-900/90 border-zinc-700"
-          onClick={() => console.log('Show quick actions')}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Quick Actions
-        </Button>
+                {/* Tags */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {item.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="rounded-full bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-200"
+                    >
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* AI Score */}
+                {item.aiScore && (
+                  <div className="mt-4 flex items-center justify-between p-2 rounded-lg bg-pink-500/5 border border-pink-500/10">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-pink-500" />
+                      <span className="text-sm text-muted-foreground">AI Score</span>
+                    </div>
+                    <Badge className="bg-pink-500/10 text-pink-500">
+                      {item.aiScore}/100
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Scheduling Info */}
+                {item.scheduling && (
+                  <div className="mt-4 space-y-2">
+                    {Object.entries(item.scheduling).map(([platform, schedule]) => (
+                      <div
+                        key={platform}
+                        className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {platform === 'onlyfans' ? 'OnlyFans' : 'Fansly'}
+                          </span>
+                        </div>
+                        <span className="text-sm text-foreground">
+                          {schedule.date} at {schedule.time}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
-    </PageContainer>
+    </div>
   )
 } 

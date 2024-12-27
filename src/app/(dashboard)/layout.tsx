@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, createContext, useContext } from 'react'
+import { useState, createContext, useContext, useEffect } from 'react'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
-import { usePlatformStore } from '@/store/platform-store'
+import { Sidebar } from '@/components/dashboard/Sidebar'
+import { Background } from '@/components/ui/background'
 
 interface DashboardContextValue {
   pageProps: {
@@ -35,13 +35,43 @@ export default function DashboardLayout({
     showPlatformFilter: true,
   })
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      setSidebarOpen(false)
+    }
+  }, [])
+
+  // Handle visibility change
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        setSidebarOpen(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
   return (
     <DashboardContext.Provider value={{ pageProps, setPageProps }}>
-      <div className="flex min-h-screen">
-        <DashboardSidebar />
-        <div className="flex-1">
-          <DashboardHeader />
-          <main className="p-6">{children}</main>
+      <div className="flex min-h-screen bg-black">
+        <Sidebar 
+          open={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+        />
+        <div className="flex-1 flex flex-col lg:pl-64">
+          <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     </DashboardContext.Provider>

@@ -4,111 +4,81 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3.9%;
+    --background: 0 0% 2%;
     --foreground: 0 0% 98%;
     --grid-size: 30px;
     --grid-strength: 1px;
-    --grid-color: rgba(255, 27, 107, 0.05);
-
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
- 
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
- 
-    --primary: 0 72.2% 50.6%;
-    --primary-foreground: 0 85.7% 97.3%;
- 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
- 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
- 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
- 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 72.2% 50.6%;
-
-    --radius: 0.5rem;
+    --grid-color: rgba(255, 27, 107, 0.04);
+    --accent-1: #FF1B6B;
+    --accent-2: #45CAFF;
+    --accent-3: #9D4EDD;
+    --shadow-color: 0deg 0% 0%;
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
+    @apply border-[hsl(var(--border))] selection:bg-primary-pink/30 selection:text-white;
   }
+
+  html {
+    @apply antialiased scroll-smooth;
+  }
+
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    background-image: 
-      linear-gradient(var(--grid-color) var(--grid-strength), transparent var(--grid-strength)),
-      linear-gradient(90deg, var(--grid-color) var(--grid-strength), transparent var(--grid-strength));
-    background-size: var(--grid-size) var(--grid-size);
-    animation: grid-fade 3s infinite linear;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-      linear-gradient(var(--grid-color) var(--grid-strength), transparent var(--grid-strength)),
-      linear-gradient(90deg, var(--grid-color) var(--grid-strength), transparent var(--grid-strength));
-    background-size: calc(var(--grid-size) * 2) calc(var(--grid-size) * 2);
-    animation: grid-fade 4s infinite linear;
-    z-index: -1;
-  }
-
-  body::after {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
-    z-index: -1;
-    pointer-events: none;
+    @apply bg-background text-foreground min-h-screen relative overflow-x-hidden tracking-tight opacity-0 animate-fade-in;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "ss02" 1;
   }
 }
 
 @layer components {
   .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(to right, #FF1B6B, #9D4EDD, #45CAFF);
+    @apply bg-clip-text text-transparent font-bold tracking-tight relative;
+    background-image: linear-gradient(
+      135deg,
+      #FF1B6B,
+      #9D4EDD 45%,
+      #45CAFF
+    );
+    text-shadow: 0 0 30px rgba(255, 27, 107, 0.2);
   }
 
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg;
+    @apply bg-[#0A0A0F]/95 backdrop-blur-sm
+           border border-white/5 rounded-lg
+           transition-all duration-300
+           hover:border-[#FF1B6B]/20
+           relative overflow-hidden;
+    box-shadow: 
+      0 4px 24px -6px rgba(0, 0, 0, 0.3),
+      0 12px 48px -12px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
-  .neon-glow {
-    box-shadow: 0 0 10px #FF1B6B;
-    transition: box-shadow 0.3s ease;
+  .glass-panel:hover {
+    box-shadow: 
+      0 8px 32px -8px rgba(0, 0, 0, 0.4),
+      0 16px 64px -16px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(255, 27, 107, 0.15),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
   }
 
-  .hover-lift {
-    @apply transition-transform duration-300 hover:-translate-y-1;
+  .glass-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/[0.07] to-transparent opacity-0 transition-opacity duration-300;
+  }
+
+  .glass-panel:hover::before {
+    @apply opacity-100;
   }
 }
 
 @layer utilities {
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide {
+    @apply [scrollbar-width:none] [-ms-overflow-style:none];
   }
   
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   .text-balance {
@@ -123,68 +93,48 @@
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 
+  .text-shadow-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+
   .mask-fade-out {
     mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
   }
-}
 
-/* Custom Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgb(255, 27, 107), 0 0 20px rgb(255, 27, 107);
-  }
-  50% { 
-    box-shadow: 0 0 10px rgb(255, 27, 107), 0 0 30px rgb(255, 27, 107);
+  .clip-path-slant {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
   }
 }
 
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Custom Classes */
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-gradient {
-  animation: gradient-shift 15s ease infinite;
-  background-size: 200% 200%;
-}
-
-/* Add these new animations */
-@keyframes grid-fade {
-  0% {
-    background-position: 0 0;
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    background-position: var(--grid-size) var(--grid-size);
-    opacity: 1;
-  }
-}
-
-@keyframes grid-pulse {
+@keyframes particle-float {
   0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
   }
   50% {
-    transform: scale(1.02);
+    transform: translateY(-35px) translateX(-10px);
+  }
+  75% {
+    transform: translateY(-20px) translateX(8px);
+  }
+}
+
+@keyframes animate-gradient-xy {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
     opacity: 1;
   }
 }

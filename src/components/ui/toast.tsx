@@ -1,51 +1,121 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useToast } from './use-toast'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
-export function Toaster() {
-  const { toasts, dismiss } = useToast()
+export type ToastType = 'success' | 'error' | 'warning' | 'info'
+
+interface ToastProps {
+  id: string
+  message: string
+  type: ToastType
+  duration?: number
+  onClose: () => void
+}
+
+const toastTypeConfig = {
+  success: {
+    icon: '✓',
+    className: 'bg-emerald-500',
+  },
+  error: {
+    icon: '✕',
+    className: 'bg-red-500',
+  },
+  warning: {
+    icon: '⚠',
+    className: 'bg-yellow-500',
+  },
+  info: {
+    icon: 'ℹ',
+    className: 'bg-blue-500',
+  },
+}
+
+function Toast({ message, type, duration = 3000, onClose }: ToastProps) {
+  useEffect(() => {
+    if (duration) {
+      const timer = setTimeout(onClose, duration)
+      return () => clearTimeout(timer)
+    }
+  }, [duration, onClose])
+
+  const config = toastTypeConfig[type]
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.3 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-lg ${config.className}`}
+    >
+      <span className="text-lg">{config.icon}</span>
+      <p>{message}</p>
+      <button
+        onClick={onClose}
+        className="ml-2 rounded-full p-1 hover:bg-black/10"
+        aria-label="Close notification"
+      >
+        ✕
+      </button>
+    </motion.div>
+  )
+}
+
+let toastCount = 0
+
+export const toast = {
+  show: (message: string, type: ToastType = 'info', duration = 3000) => {
+    const id = `toast-${toastCount++}`
+    const event = new CustomEvent('toast', {
+      detail: { id, message, type, duration },
+    })
+    document.dispatchEvent(event)
+  },
+  success: (message: string, duration?: number) => toast.show(message, 'success', duration),
+  error: (message: string, duration?: number) => toast.show(message, 'error', duration),
+  warning: (message: string, duration?: number) => toast.show(message, 'warning', duration),
+  info: (message: string, duration?: number) => toast.show(message, 'info', duration),
+}
+
+export function ToastContainer() {
+  const [toasts, setToasts] = useState<ToastProps[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+
+    const handleToast = (e: CustomEvent<ToastProps>) => {
+      setToasts((prev) => [...prev, e.detail])
+    }
+
+    document.addEventListener('toast' as any, handleToast as any)
+    return () => {
+      document.removeEventListener('toast' as any, handleToast as any)
+    }
+  }, [])
+
+  if (!mounted) return null
+
+  return createPortal(
+    <div
+      className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-2"
+      role="alert"
+      aria-live="polite"
+    >
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
-          <motion.div
+          <Toast
             key={toast.id}
-            layout
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className={`
-              min-w-[300px] p-4 rounded-lg shadow-lg
-              ${
-                toast.variant === 'destructive'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-900 text-white'
-              }
-            `}
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <h3 className="font-medium mb-1">{toast.title}</h3>
-                {toast.description && (
-                  <p className="text-sm opacity-90">{toast.description}</p>
-                )}
-              </div>
-              <button
-                onClick={() => dismiss(toast.id)}
-                className={`
-                  p-1 rounded-md hover:bg-white/20 transition-colors
-                  ${toast.variant === 'destructive' ? 'text-white' : 'text-gray-400'}
-                `}
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
+            {...toast}
+            onClose={() => {
+              setToasts((prev) => prev.filter((t) => t.id !== toast.id))
+            }}
+          />
         ))}
       </AnimatePresence>
-    </div>
+    </div>,
+    document.body
   )
 } 

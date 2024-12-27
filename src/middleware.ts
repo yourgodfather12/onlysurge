@@ -1,96 +1,76 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { CookieOptions } from '@supabase/ssr'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  try {
-    // Create response and Supabase client
-    const res = NextResponse.next()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return req.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            res.cookies.set({ name, value, ...options })
-          },
-          remove(name: string, options: CookieOptions) {
-            res.cookies.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
+// Security headers
+const securityHeaders = {
+  'X-DNS-Prefetch-Control': 'on',
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+  'X-XSS-Protection': '1; mode=block',
+};
 
-    // Security headers
-    res.headers.set('X-Frame-Options', 'DENY')
-    res.headers.set('X-Content-Type-Options', 'nosniff')
-    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-    res.headers.set(
-      'Permissions-Policy',
-      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-    )
+// Simple in-memory rate limiting
+const rateLimit = new Map();
+const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 60; // 60 requests per minute
+
+export async function middleware(request: NextRequest) {
+  // Only apply to API routes
+  if (request.nextUrl.pathname.startsWith('/api')) {
+    const ip = request.ip ?? '127.0.0.1';
+    const now = Date.now();
     
-    // Remove powered by header
-    res.headers.delete('x-powered-by')
-
-    // Rate limiting (basic implementation)
-    const clientIp = req.ip ?? 'unknown'
-    const rateLimit = await getRateLimit(clientIp)
-    if (rateLimit.exceeded) {
-      return new NextResponse('Too Many Requests', { status: 429 })
+    // Clean up old entries
+    for (const [key, value] of rateLimit.entries()) {
+      if (now - value.timestamp > RATE_LIMIT_DURATION) {
+        rateLimit.delete(key);
+      }
     }
-
-    // Refresh session if expired
-    const { data: { session } } = await supabase.auth.getSession()
-
-    // Add user context to headers if authenticated
-    if (session) {
-      res.headers.set('x-user-id', session.user.id)
-      res.headers.set('x-user-role', session.user.role)
+    
+    // Check rate limit
+    const rateLimitInfo = rateLimit.get(ip) ?? { count: 0, timestamp: now };
+    
+    if (now - rateLimitInfo.timestamp > RATE_LIMIT_DURATION) {
+      rateLimitInfo.count = 0;
+      rateLimitInfo.timestamp = now;
     }
-
-    // Handle maintenance mode
-    if (process.env.MAINTENANCE_MODE === 'true' && !isMaintenanceExempt(req.url)) {
-      return NextResponse.rewrite(new URL('/maintenance', req.url))
+    
+    rateLimitInfo.count++;
+    rateLimit.set(ip, rateLimitInfo);
+    
+    if (rateLimitInfo.count > MAX_REQUESTS) {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Too Many Requests',
+          message: 'Rate limit exceeded. Please try again later.',
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '60',
+          },
+        }
+      );
     }
-
-    return res
-  } catch (error) {
-    // Log error (implement proper error logging in production)
-    console.error('Middleware error:', error)
-
-    // Return graceful error response
-    return new NextResponse('Internal Server Error', { status: 500 })
   }
+  
+  // Apply security headers to all routes
+  const response = NextResponse.next();
+  
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  
+  return response;
 }
 
-// Rate limiting helper
-async function getRateLimit(ip: string) {
-  // Implement proper rate limiting with Redis or similar
-  return { exceeded: false }
-}
-
-// Maintenance mode helper
-function isMaintenanceExempt(url: string): boolean {
-  // Add logic to exempt certain paths
-  return url.includes('/api/health')
-}
-
-// Configure which paths the middleware runs on
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     * - api/health (health check endpoint)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public|api/health).*)',
+    // Apply to all routes
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-} 
+}; 
